@@ -99,6 +99,7 @@ svg#map:active{cursor:grabbing}
 @media (prefers-reduced-motion:no-preference){.centre .pulse{animation:pulse 2.4s ease-out infinite}}
 @keyframes pulse{from{r:6;opacity:.9}to{r:22;opacity:0}}
 .mapctl{position:absolute;inset-inline-end:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px}
+.backmap{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:3;background:var(--kw);color:#111;border:0;border-radius:999px;padding:8px 16px;font:700 13px var(--f-body);cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.35);white-space:nowrap}
 .mapctl button,.legend{background:var(--panel);color:var(--ink);border:1px solid var(--rule);border-radius:8px}
 .mapctl button{min-width:36px;height:36px;font-size:18px;cursor:pointer;font-family:var(--f-body)}
 .mapctl button.txt{padding:0 10px;font-size:12px;font-weight:600}
@@ -213,6 +214,7 @@ html,body{touch-action:pan-x pan-y}
   <div class="stage">
     <svg id="map" role="img"></svg>
     <div class="legend" data-t="legend"></div>
+    <button id="back" class="backmap" type="button" data-t="back" hidden></button>
     <div class="mapctl">
       <button id="zin" type="button">+</button>
       <button id="zout" type="button">−</button>
@@ -264,7 +266,7 @@ const T={
       offline:"تعذّر الاتصال بالخادم. سنحاول مجدداً بعد دقيقتين.",waiting:"الخادم يجمع الأخبار الآن. ستظهر خلال دقيقة.",
       none:"لا توجد أخبار بهذه الشروط. وسّع المسافة أو فعّل تصنيفات أكثر.",sources:"المصادر: ",failed:"(تعذّر الوصول)",
       switchTo:"English",nearby:n=>`${n} أخبار هنا`,new:"جديد",mapLabel:"خريطة العالم ومركزها الكويت، والأخبار موزعة حسب المسافة والاتجاه",
-      zin:"تكبير",zout:"تصغير",newsList:"الأخبار",search:"ابحث عن دولة أو مدينة",kCountry:"دولة",kCity:"مدينة",kArea:"منطقة في الكويت",noPlace:"لا توجد نتائج",nonePlace:p=>`لا توجد أخبار عن ${p} في الوقت الحالي. ستظهر هنا فور نشرها.`,group:(n,p,ex)=>`أخبار ${p}${ex?"":" وما حولها"} (${n}) · من الأحدث`,showAll:"✕ كل الأخبار",close:"إغلاق",collapse:"تصغير اللوحة",expand:"توسيع اللوحة",readBtn:s=>`اقرأ الخبر كاملاً في ${s}`},
+      zin:"تكبير",zout:"تصغير",newsList:"الأخبار",search:"ابحث عن دولة أو مدينة",kCountry:"دولة",kCity:"مدينة",kArea:"منطقة في الكويت",noPlace:"لا توجد نتائج",nonePlace:p=>`لا توجد أخبار عن ${p} في الوقت الحالي. ستظهر هنا فور نشرها.`,group:(n,p,ex)=>`أخبار ${p}${ex?"":" وما حولها"} (${n}) · من الأحدث`,showAll:"✕ كل الأخبار",back:"✕ العودة للخريطة",close:"إغلاق",collapse:"تصغير اللوحة",expand:"توسيع اللوحة",readBtn:s=>`اقرأ الخبر كاملاً في ${s}`},
   en:{tag:"What’s going on around you",legend:"Rings show distance from Kuwait City. Up is north. Every story sits at its true distance and bearing.",
       gulf:"Gulf",world:"World",within:"Within",sortBy:"Sort by",newest:"Newest",nearest:"Nearest",all:"All",
       cats:{financial:"Financial",political:"Political",war:"War",crisis:"Crises",crime:"Crime"},
@@ -273,7 +275,7 @@ const T={
       offline:"Can't reach the server. Trying again in two minutes.",waiting:"The server is collecting stories now. They'll appear within a minute.",
       none:"No stories match. Widen the distance or turn on more categories.",sources:"Sources: ",failed:"(unreachable)",
       switchTo:"العربية",nearby:n=>`${n} stories here`,new:"New",mapLabel:"Map of the world centred on Kuwait, with stories placed by distance and direction",
-      zin:"Zoom in",zout:"Zoom out",newsList:"News",search:"Search a country or city",kCountry:"Country",kCity:"City",kArea:"Area in Kuwait",noPlace:"No matches",nonePlace:p=>`No stories about ${p} right now. They'll appear here as soon as they're published.`,group:(n,p,ex)=>`${n} stories ${ex?"in":"in and around"} ${p} · newest first`,showAll:"✕ All news",close:"Close",collapse:"Collapse panel",expand:"Expand panel",readBtn:s=>`Read the full story at ${s} ↗`}
+      zin:"Zoom in",zout:"Zoom out",newsList:"News",search:"Search a country or city",kCountry:"Country",kCity:"City",kArea:"Area in Kuwait",noPlace:"No matches",nonePlace:p=>`No stories about ${p} right now. They'll appear here as soon as they're published.`,group:(n,p,ex)=>`${n} stories ${ex?"in":"in and around"} ${p} · newest first`,showAll:"✕ All news",back:"✕ Back to world map",close:"Close",collapse:"Collapse panel",expand:"Expand panel",readBtn:s=>`Read the full story at ${s} ↗`}
 };
 const CATV={financial:"--fin",political:"--pol",war:"--war",crisis:"--cri",crime:"--crm"};
 let lang="ar";try{const q=new URLSearchParams(location.search).get("lang");lang=q==="en"||q==="ar"?q:(localStorage.getItem("wgo-lang")||"ar")}catch(e){}
@@ -465,7 +467,7 @@ function clickCluster(c){hideTip();
   if(c.items.length===1)return select(c.items[0].id,false);
   const counts={};for(const s of c.items){const k=placeName(s);counts[k]=(counts[k]||0)+1}
   const top=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
-  state.group={ids:new Set(c.items.map(s=>s.id)),place:top,exact:Object.keys(counts).length===1};applyFocus();qEl.value="";
+  state.group={ids:new Set(c.items.map(s=>s.id)),place:top,exact:Object.keys(counts).length===1};applyFocus();updBack();qEl.value="";
   state.sel=null;gRoute.selectAll("*").remove();renderDetail();renderList();drawMarkers();listEl.scrollTop=0;
   if(!isPhone())listEl.scrollIntoView({block:"nearest"});
   // zoom in on the circle so its stories spread out on the map
@@ -474,7 +476,9 @@ function clickCluster(c){hideTip();
   const span=Math.max((x1-x0)/W,(y1-y0)/H);
   zoomTo((x0+x1)/2,(y0+y1)/2,Math.min(120,Math.max(TR.k*2.5,span?0.5/span:120)));
 }
-function clearGroup(){const hadFocus=state.group&&state.group.focus;state.group=null;document.getElementById("q").value="";applyFocus();renderList();drawMarkers();drawLabels();listEl.scrollTop=0;if(hadFocus)zoomWorld()}
+function updBack(){const b=document.getElementById("back");if(b)b.hidden=!(state.group||TR.k>1.05)}
+document.getElementById("back").onclick=()=>{if(state.group)clearGroup();qEl.value="";zoomWorld();updBack()};
+function clearGroup(){state.group=null;document.getElementById("q").value="";applyFocus();renderList();drawMarkers();drawLabels();listEl.scrollTop=0;zoomWorld();updBack()}
 function applyFocus(){
   const F=state.group&&state.group.focus;
   if(landSel)landSel.classed("dim",d=>!!F&&!(F.feat?d===F.feat:false)).classed("focus",d=>!!F&&F.feat===d);
@@ -528,7 +532,7 @@ function select(id,fromList){
 // keep the page itself at normal size: two fingers zoom the map only (iPhone ignores user-scalable)
 for(const ev of ["gesturestart","gesturechange","gestureend"])document.addEventListener(ev,e=>e.preventDefault(),{passive:false});
 document.addEventListener("touchmove",e=>{if(e.touches.length>1&&!e.target.closest("#map"))e.preventDefault()},{passive:false});
-const zoom=d3.zoom().scaleExtent([1,120]).on("zoom",e=>{TR=e.transform;root.attr("transform",TR);restyle();drawLabels();drawMarkers();hideTip()});
+const zoom=d3.zoom().scaleExtent([1,120]).on("zoom",e=>{TR=e.transform;updBack();root.attr("transform",TR);restyle();drawLabels();drawMarkers();hideTip()});
 svg.call(zoom).on("dblclick.zoom",null);
 const RM=matchMedia("(prefers-reduced-motion: reduce)");
 function zoomTo(x,y,k){svg.transition().duration(RM.matches?0:650).call(zoom.transform,d3.zoomIdentity.translate(W/2,H/2).scale(k).translate(-x,-y))}
