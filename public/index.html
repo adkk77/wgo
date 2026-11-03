@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>WGO</title>
-<meta name="description" content="أخبار العالم على خريطة مركزها الكويت">
+<title>WGO · ماذا يحدث حول الكويت</title>
+<meta name="description" content="ماذا يحدث حول الكويت · What’s going on around Kuwait">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
@@ -215,7 +215,7 @@ aside{min-width:0;min-height:0;display:flex;flex-direction:column;border-inline-
 const KW=[47.9783,29.3759];
 const POLL_MS=120000;
 const T={
-  ar:{tag:"أخبار العالم مقاسةً من الكويت",legend:"الحلقات تبيّن المسافة من مدينة الكويت. الشمال إلى الأعلى، وكل خبر في موقعه الحقيقي بالمسافة والاتجاه.",
+  ar:{tag:"ماذا يحدث حول الكويت",legend:"الحلقات تبيّن المسافة من مدينة الكويت. الشمال إلى الأعلى، وكل خبر في موقعه الحقيقي بالمسافة والاتجاه.",
       gulf:"الخليج",world:"العالم",within:"ضمن",sortBy:"الترتيب",newest:"الأحدث",nearest:"الأقرب",all:"الكل",
       cats:{financial:"اقتصاد",political:"سياسة",war:"حرب",crisis:"أزمات",crime:"جريمة"},
       inKuwait:"داخل الكويت",km:"كم",dirs:["شمال","شمال شرق","شرق","جنوب شرق","جنوب","جنوب غرب","غرب","شمال غرب"],compass:["ش","ش ق","ق","ج ق","ج","ج غ","غ","ش غ"],
@@ -224,7 +224,7 @@ const T={
       none:"لا توجد أخبار بهذه الشروط. وسّع المسافة أو فعّل تصنيفات أكثر.",sources:"المصادر: ",failed:"(تعذّر الوصول)",
       switchTo:"English",nearby:n=>`${n} أخبار هنا`,new:"جديد",mapLabel:"خريطة العالم ومركزها الكويت، والأخبار موزعة حسب المسافة والاتجاه",
       zin:"تكبير",zout:"تصغير",newsList:"الأخبار",group:(n,p,ex)=>`أخبار ${p}${ex?"":" وما حولها"} (${n}) · من الأحدث`,showAll:"✕ كل الأخبار",close:"إغلاق",collapse:"تصغير اللوحة",expand:"توسيع اللوحة",readBtn:s=>`اقرأ الخبر كاملاً في ${s}`},
-  en:{tag:"World news, measured from Kuwait",legend:"Rings show distance from Kuwait City. Up is north. Every story sits at its true distance and bearing.",
+  en:{tag:"What’s going on around Kuwait",legend:"Rings show distance from Kuwait City. Up is north. Every story sits at its true distance and bearing.",
       gulf:"Gulf",world:"World",within:"Within",sortBy:"Sort by",newest:"Newest",nearest:"Nearest",all:"All",
       cats:{financial:"Financial",political:"Political",war:"War",crisis:"Crises",crime:"Crime"},
       inKuwait:"In Kuwait",km:"km",dirs:["N","NE","E","SE","S","SW","W","NW"],compass:["N","NE","E","SE","S","SW","W","NW"],
@@ -256,7 +256,7 @@ function applyLang(){
   document.getElementById("lang").textContent=t().switchTo;
   document.getElementById("zin").setAttribute("aria-label",t().zin);document.getElementById("zout").setAttribute("aria-label",t().zout);
   document.getElementById("map").setAttribute("aria-label",t().mapLabel);
-  document.title=lang==="ar"?"WGO · خريطة الأخبار":"WGO · News map";
+  document.title=lang==="ar"?"WGO · ماذا يحدث حول الكويت":"WGO · What’s going on around Kuwait";
 }
 document.getElementById("lang").onclick=()=>{lang=lang==="ar"?"en":"ar";try{localStorage.setItem("wgo-lang",lang)}catch(e){}
   state.sel=null;state.group=null;state.stories=[];state.firstLoad=true;applyLang();renderAll();load()};
