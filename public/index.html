@@ -137,7 +137,7 @@ aside{min-width:0;min-height:0;display:flex;flex-direction:column;border-inline-
 @media (max-width:820px){
   /* phone: the map stays pinned at the top; only the news list scrolls */
   body{overflow:hidden}
-  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 52% minmax(0,1fr)}
+  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 40% minmax(0,1fr)}
   aside{border-inline-start:0;border-top:1px solid var(--rule);min-height:0}
   aside .controls{display:none}
   .drop{display:flex;flex-direction:column;min-height:0;flex:1}
@@ -145,7 +145,13 @@ aside{min-width:0;min-height:0;display:flex;flex-direction:column;border-inline-
   .mapfilters{display:block}
   .legend{display:none}
   .detail{top:8px;left:8px;right:8px;width:auto;max-height:calc(100% - 16px)}
-  .mapctl{flex-direction:row}
+  /* map buttons: a slim column down the left edge, under the filters */
+  .mapctl{flex-direction:column;left:8px;right:auto;top:52px;bottom:auto;gap:4px}
+  .mapctl button{min-width:30px;height:30px;font-size:15px;border-radius:7px}
+  .mapctl button.txt{padding:0 6px;font-size:10.5px}
+  .mf select{font-size:12px;padding-block:5px}
+  .foot{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-block:6px;font-size:11px}
+  header{padding-block:6px}
 }
 @media (min-width:821px){.drop{display:flex;flex-direction:column;min-height:0;flex:1}}
 
@@ -320,7 +326,7 @@ function destination(b,deg){const φ1=KW[1]*rad,λ1=KW[0]*rad,δ=deg*rad,θ=b*ra
   const φ2=Math.asin(Math.sin(φ1)*Math.cos(δ)+Math.cos(φ1)*Math.sin(δ)*Math.cos(θ));
   const λ2=λ1+Math.atan2(Math.sin(θ)*Math.sin(δ)*Math.cos(φ1),Math.cos(δ)-Math.sin(φ1)*Math.sin(φ2));return [λ2/rad,φ2/rad]}
 function layout(){const r=stage.getBoundingClientRect();W=r.width;H=r.height;svg.attr("viewBox",`0 0 ${W} ${H}`);
-  proj.translate([W/2,H/2]).scale(Math.min(W,H)/2/Math.PI*0.7);zoom.translateExtent([[0,0],[W,H]])}
+  const ph=W<=820;proj.translate([W/2,H/2+(ph?14:0)]).scale(Math.min(W,ph?H-28:H)/2/Math.PI*(ph?0.84:0.7));zoom.translateExtent([[0,0],[W,H]])}
 function drawBase(){
   gBase.selectAll("*").remove();gRings.selectAll("*").remove();
   gBase.append("path").datum({type:"Sphere"}).attr("class","sphere").attr("d",path);
