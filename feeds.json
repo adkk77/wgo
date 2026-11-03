@@ -124,5 +124,71 @@
     "nameAr": "سي إن بي سي",
     "lang": "en",
     "url": "https://news.google.com/rss/search?q=site:cnbc.com+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "name": "Al Anba",
+    "nameAr": "الأنباء",
+    "lang": "ar",
+    "kuwaitLocal": true,
+    "url": "https://news.google.com/rss/search?q=site:alanba.com.kw+when:1d&hl=ar&gl=KW&ceid=KW:ar"
+  },
+  {
+    "name": "Al Jarida",
+    "nameAr": "الجريدة",
+    "lang": "ar",
+    "kuwaitLocal": true,
+    "url": "https://news.google.com/rss/search?q=site:aljarida.com+when:1d&hl=ar&gl=KW&ceid=KW:ar"
+  },
+  {
+    "name": "Al Watan Kuwait",
+    "nameAr": "الوطن الكويتية",
+    "lang": "ar",
+    "kuwaitLocal": true,
+    "url": "https://news.google.com/rss/search?q=site:alwatan.com.kw+when:1d&hl=ar&gl=KW&ceid=KW:ar"
+  },
+  {
+    "name": "Asharq Al-Awsat",
+    "nameAr": "الشرق الأوسط",
+    "lang": "ar",
+    "url": "https://news.google.com/rss/search?q=site:aawsat.com+when:1d&hl=ar&gl=KW&ceid=KW:ar"
+  },
+  {
+    "name": "CNN Arabic",
+    "nameAr": "سي إن إن بالعربية",
+    "lang": "ar",
+    "url": "https://news.google.com/rss/search?q=site:arabic.cnn.com+when:1d&hl=ar&gl=KW&ceid=KW:ar"
+  },
+  {
+    "name": "Boursa Kuwait",
+    "nameAr": "بورصة الكويت",
+    "lang": "ar",
+    "kuwaitLocal": true,
+    "url": "https://news.google.com/rss/search?q=%D8%A8%D9%88%D8%B1%D8%B5%D8%A9+%D8%A7%D9%84%D9%83%D9%88%D9%8A%D8%AA+when:1d&hl=ar&gl=KW&ceid=KW:ar"
+  },
+  {
+    "name": "Boursa Kuwait",
+    "nameAr": "بورصة الكويت",
+    "lang": "en",
+    "kuwaitLocal": true,
+    "url": "https://news.google.com/rss/search?q=%22Boursa+Kuwait%22+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "name": "Arab Times",
+    "nameAr": "عرب تايمز",
+    "lang": "en",
+    "kuwaitLocal": true,
+    "url": "https://news.google.com/rss/search?q=site:arabtimesonline.com+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "name": "Bloomberg",
+    "nameAr": "بلومبرغ",
+    "lang": "en",
+    "url": "https://news.google.com/rss/search?q=site:bloomberg.com+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "name": "Financial Times",
+    "nameAr": "فايننشال تايمز",
+    "lang": "en",
+    "url": "https://news.google.com/rss/search?q=site:ft.com+when:1d&hl=en-US&gl=US&ceid=US:en"
   }
 ]
