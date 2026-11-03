@@ -122,6 +122,10 @@ aside{min-width:0;min-height:0;display:flex;flex-direction:column;border-inline-
 .detail .dmeta{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px}
 .detail .dread{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;background:var(--ink);color:var(--panel);text-decoration:none;font-weight:600;padding:8px 12px;border-radius:8px}
 .dropbtn{display:none}
+.groupbar{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--chip);border-bottom:1px solid var(--rule);font-weight:600;font-size:13.5px}
+.groupbar span{flex:1;min-width:0}
+.groupbar button{border:1px solid var(--rule);background:var(--panel);color:var(--ink);border-radius:999px;padding:5px 12px;font:600 12.5px var(--f-body);cursor:pointer;white-space:nowrap}
+.groupbar button:focus-visible{outline:2px solid var(--kw);outline-offset:2px}
 .new-badge{font-size:10.5px;font-weight:700;color:var(--kw)}
 .foot{padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--rule);line-height:1.6}
 .foot .off{text-decoration:line-through;opacity:.7}
@@ -219,7 +223,7 @@ const T={
       offline:"تعذّر الاتصال بالخادم. سنحاول مجدداً بعد دقيقتين.",waiting:"الخادم يجمع الأخبار الآن. ستظهر خلال دقيقة.",
       none:"لا توجد أخبار بهذه الشروط. وسّع المسافة أو فعّل تصنيفات أكثر.",sources:"المصادر: ",failed:"(تعذّر الوصول)",
       switchTo:"English",nearby:n=>`${n} أخبار هنا`,new:"جديد",mapLabel:"خريطة العالم ومركزها الكويت، والأخبار موزعة حسب المسافة والاتجاه",
-      zin:"تكبير",zout:"تصغير",newsList:"الأخبار",close:"إغلاق",collapse:"تصغير اللوحة",expand:"توسيع اللوحة",readBtn:s=>`اقرأ الخبر كاملاً في ${s}`},
+      zin:"تكبير",zout:"تصغير",newsList:"الأخبار",group:(n,p,ex)=>`أخبار ${p}${ex?"":" وما حولها"} (${n}) · من الأحدث`,showAll:"✕ كل الأخبار",close:"إغلاق",collapse:"تصغير اللوحة",expand:"توسيع اللوحة",readBtn:s=>`اقرأ الخبر كاملاً في ${s}`},
   en:{tag:"World news, measured from Kuwait",legend:"Rings show distance from Kuwait City. Up is north. Every story sits at its true distance and bearing.",
       gulf:"Gulf",world:"World",within:"Within",sortBy:"Sort by",newest:"Newest",nearest:"Nearest",all:"All",
       cats:{financial:"Financial",political:"Political",war:"War",crisis:"Crises",crime:"Crime"},
@@ -228,7 +232,7 @@ const T={
       offline:"Can't reach the server. Trying again in two minutes.",waiting:"The server is collecting stories now. They'll appear within a minute.",
       none:"No stories match. Widen the distance or turn on more categories.",sources:"Sources: ",failed:"(unreachable)",
       switchTo:"العربية",nearby:n=>`${n} stories here`,new:"New",mapLabel:"Map of the world centred on Kuwait, with stories placed by distance and direction",
-      zin:"Zoom in",zout:"Zoom out",newsList:"News",close:"Close",collapse:"Collapse panel",expand:"Expand panel",readBtn:s=>`Read the full story at ${s} ↗`}
+      zin:"Zoom in",zout:"Zoom out",newsList:"News",group:(n,p,ex)=>`${n} stories ${ex?"in":"in and around"} ${p} · newest first`,showAll:"✕ All news",close:"Close",collapse:"Collapse panel",expand:"Expand panel",readBtn:s=>`Read the full story at ${s} ↗`}
 };
 const CATV={financial:"--fin",political:"--pol",war:"--war",crisis:"--cri",crime:"--crm"};
 let lang="ar";try{const q=new URLSearchParams(location.search).get("lang");lang=q==="en"||q==="ar"?q:(localStorage.getItem("wgo-lang")||"ar")}catch(e){}
@@ -255,7 +259,7 @@ function applyLang(){
   document.title=lang==="ar"?"WGO · خريطة الأخبار":"WGO · News map";
 }
 document.getElementById("lang").onclick=()=>{lang=lang==="ar"?"en":"ar";try{localStorage.setItem("wgo-lang",lang)}catch(e){}
-  state.sel=null;state.stories=[];state.firstLoad=true;applyLang();renderAll();load()};
+  state.sel=null;state.group=null;state.stories=[];state.firstLoad=true;applyLang();renderAll();load()};
 
 /* ---------- controls ---------- */
 const catsEl=document.getElementById("cats");
@@ -284,7 +288,14 @@ const listEl=document.getElementById("list");
 function renderList(){
   listEl.innerHTML="";
   if(!state.stories.length){const d=document.createElement("div");d.className="empty";d.textContent=state.error?t().offline:(state.updated===null&&!state.firstLoad?t().waiting:t().loading);listEl.append(d);return}
-  const v=visible().slice().sort(state.sort==="near"?(a,b)=>a.km-b.km||b.published.localeCompare(a.published):(a,b)=>b.published.localeCompare(a.published)||a.km-b.km);
+  let v=visible();
+  if(state.group){v=v.filter(s=>state.group.ids.has(s.id));
+    const bar=document.createElement("div");bar.className="groupbar";
+    const tx=document.createElement("span");tx.textContent=t().group(nf().format(v.length),state.group.place,state.group.exact);
+    const b=document.createElement("button");b.type="button";b.textContent=t().showAll;b.onclick=clearGroup;
+    bar.append(tx,b);listEl.append(bar);
+    v=v.slice().sort((a,b)=>b.published.localeCompare(a.published));
+  } else v=v.slice().sort(state.sort==="near"?(a,b)=>a.km-b.km||b.published.localeCompare(a.published):(a,b)=>b.published.localeCompare(a.published)||a.km-b.km);
   if(!v.length){const d=document.createElement("div");d.className="empty";d.textContent=t().none;listEl.append(d);return}
   const frag=document.createDocumentFragment();
   for(const s of v.slice(0,250)){
@@ -359,7 +370,7 @@ function clusters(){
 const arc=d3.arc();
 function drawMarkers(){
   const g=gMarks.selectAll("g.marker").data(clusters(),c=>c.items.map(s=>s.id).join(",")).join(e=>e.append("g").attr("class","marker").attr("tabindex",0).attr("role","button"));
-  g.attr("transform",c=>`translate(${c.x},${c.y})`).classed("sel",c=>c.items.some(s=>s.id===state.sel)).classed("fresh",c=>c.items.some(s=>s._new))
+  g.attr("transform",c=>`translate(${c.x},${c.y})`).classed("sel",c=>c.items.some(s=>s.id===state.sel)||(!!state.group&&c.items.length>1&&c.items.every(s=>state.group.ids.has(s.id)))).classed("fresh",c=>c.items.some(s=>s._new))
    .attr("aria-label",c=>c.items.length===1?`${t().cats[c.items[0].category]}: ${c.items[0].title}`:`${t().nearby(c.items.length)} · ${placeName(c.items[0])}`);
   g.each(function(c){const el=d3.select(this);el.selectAll("*").remove();
     const n=c.items.length,r=n===1?6:Math.min(9+Math.sqrt(n)*3,22);
@@ -382,12 +393,16 @@ function showTip(c){const s=c.items[0];tip.hidden=false;tip.innerHTML="";
   if(c.items.length===1){const h=document.createElement("div");h.style.marginTop="4px";h.dir="auto";h.textContent=s.title;tip.append(h)}
   tip.style.left=Math.max(6,Math.min(c.x+14,W-270))+"px";tip.style.top=Math.max(6,Math.min(c.y+12,H-100))+"px"}
 function hideTip(){tip.hidden=true}
+// A numbered circle lists all its stories, newest first, above the regular list.
 function clickCluster(c){hideTip();
   if(c.items.length===1)return select(c.items[0].id,false);
-  const ps=c.items.map(s=>proj([s.place.lon,s.place.lat]));const [x0,x1]=d3.extent(ps,p=>p[0]),[y0,y1]=d3.extent(ps,p=>p[1]);
-  if((Math.max(x1-x0,y1-y0))*TR.k<4||TR.k>60){const first=c.items.slice().sort((a,b)=>b.published.localeCompare(a.published))[0];return select(first.id,false)}
-  zoomTo((x0+x1)/2,(y0+y1)/2,Math.min(80,0.6/Math.max((x1-x0+1)/W,(y1-y0+1)/H)));
+  const counts={};for(const s of c.items){const k=placeName(s);counts[k]=(counts[k]||0)+1}
+  const top=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
+  state.group={ids:new Set(c.items.map(s=>s.id)),place:top,exact:Object.keys(counts).length===1};
+  state.sel=null;gRoute.selectAll("*").remove();renderDetail();renderList();drawMarkers();listEl.scrollTop=0;
+  if(!isPhone())listEl.scrollIntoView({block:"nearest"});
 }
+function clearGroup(){state.group=null;renderList();drawMarkers();listEl.scrollTop=0}
 function select(id,fromList){
   state.sel=state.sel===id&&fromList?null:id;
   const s=state.stories.find(x=>x.id===id);gRoute.selectAll("*").remove();
