@@ -64,6 +64,7 @@ header{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px 1
 .land.dim,.kw.dim{opacity:.25}
 .land.focus,.kw.focus{stroke:var(--kw);stroke-width:1.5}
 .marker.faded{opacity:.18}
+.marker .leader{stroke:var(--ink-2);stroke-width:1;stroke-dasharray:3 3;pointer-events:none}.marker .spot{fill:var(--kw);stroke:var(--sea);stroke-width:1.5;pointer-events:none}
 .ring.faded,.spoke.faded{opacity:.15}
 .status{margin-inline-start:auto;font-size:12px;color:var(--ink-2);display:flex;align-items:center;gap:8px}
 .status i{width:8px;height:8px;border-radius:50%;background:var(--ink-3);display:inline-block}
@@ -412,6 +413,8 @@ function drawPlaceLabels(){
   const shown=p=>lang!=="ar"||!/[A-Za-z]/.test(p.ar);
   const byAtlas=new Map(PLACES.filter(p=>p.atlasId).map(p=>[p.atlasId,p]));
   const F=state.group&&state.group.focus;
+  // keep names clear of the circles moved beside the chosen place
+  if(F)for(const c of placeAside(clusters()))if(c.ox!==undefined){const r=c.items.length===1?8:Math.min(9+Math.sqrt(c.items.length)*3,22)+3;boxes.push({x:c.x,y:c.y,w:2*r,h:2*r})}
   // the chosen place first, then countries by on-screen size, then cities when zoomed in
   if(F){const [x,y]=TR.apply(F.kind==="country"&&F.feat?F.feat._c:proj([F.lon,F.lat]));const txt=nameOf(F);const w=txt.length*7.5+8;if(fits(x,y-(F.kind==="country"?0:12),w,16))out.push({x,y:y-(F.kind==="country"?0:12),txt,cls:"focus"})}
   if(FEATS){const cs=[];for(const f of FEATS){const p=byAtlas.get(f.id);if(!p||(F&&F.atlasId===f.id))continue;const bw=(f._b[1][0]-f._b[0][0])*k;if(bw<28)continue;cs.push({f,p,bw})}
@@ -439,12 +442,25 @@ function clusters(){
   return out;
 }
 const arc=d3.arc();
+// When a country or city is chosen, move its circles beside it (with a thin line to the spot) so the shape and names stay visible.
+function focusBox(){const F=state.group&&state.group.focus;if(!F)return null;
+  if(F.feat){const [[a,b],[c,d]]=path.bounds(largest(F.feat));const [x0,y0]=TR.apply([a,b]),[x1,y1]=TR.apply([c,d]);return [x0-6,y0-6,x1+6,y1+6]}
+  const [x,y]=TR.apply(proj([F.lon,F.lat]));return [x-50,y-30,x+50,y+30]}
+function placeAside(cs){const B=focusBox();if(!B)return cs;
+  const inside=cs.filter(c=>c.items.some(s=>state.group.ids.has(s.id))&&c.x>=B[0]&&c.x<=B[2]&&c.y>=B[1]&&c.y<=B[3]).sort((a,b)=>a.y-b.y);if(!inside.length)return cs;
+  const rOf=c=>c.items.length===1?6:Math.min(9+Math.sqrt(c.items.length)*3,22);
+  const right=W-B[2]>=B[0];const gap=12;
+  let y=Math.max(70,Math.min((B[1]+B[3])/2-inside.reduce((t,c)=>t+2*rOf(c)+8,0)/2,H-60));
+  for(const c of inside){const r=rOf(c);c.ox=c.x;c.oy=c.y;
+    c.x=right?Math.min(W-r-6,B[2]+gap+r):Math.max(r+6,B[0]-gap-r);c.y=y+r;y+=2*r+8}
+  return cs}
 function drawMarkers(){
-  const g=gMarks.selectAll("g.marker").data(clusters(),c=>c.items.map(s=>s.id).join(",")).join(e=>e.append("g").attr("class","marker").attr("tabindex",0).attr("role","button"));
+  const g=gMarks.selectAll("g.marker").data(placeAside(clusters()),c=>c.items.map(s=>s.id).join(",")).join(e=>e.append("g").attr("class","marker").attr("tabindex",0).attr("role","button"));
   g.attr("transform",c=>`translate(${c.x},${c.y})`).classed("sel",c=>c.items.some(s=>s.id===state.sel)||(!!state.group&&c.items.length>1&&c.items.every(s=>state.group.ids.has(s.id)))).classed("fresh",c=>c.items.some(s=>s._new)).classed("faded",c=>!!state.group&&!!state.group.focus&&!c.items.some(s=>state.group.ids.has(s.id)))
    .attr("aria-label",c=>c.items.length===1?`${t().cats[c.items[0].category]}: ${c.items[0].title}`:`${t().nearby(c.items.length)} · ${placeName(c.items[0])}`);
   g.each(function(c){const el=d3.select(this);el.selectAll("*").remove();
     const n=c.items.length,r=n===1?6:Math.min(9+Math.sqrt(n)*3,22);
+    if(c.ox!==undefined){el.append("line").attr("class","leader").attr("x2",c.ox-c.x).attr("y2",c.oy-c.y);el.append("circle").attr("class","spot").attr("r",3).attr("cx",c.ox-c.x).attr("cy",c.oy-c.y)}
     el.append("circle").attr("class","halo").attr("r",r+3);
     if(n===1){el.append("circle").attr("r",r).style("fill",col(c.items[0].category))}
     else{const pie=d3.pie().sort(null).value(1)(c.items.slice().sort((a,b)=>a.category.localeCompare(b.category)));
@@ -455,7 +471,7 @@ function drawMarkers(){
   const [cx,cy]=TR.apply(proj(KW));
   gMarks.selectAll("g.centre").data([0]).join(e=>{const g=e.append("g").attr("class","centre");g.append("circle").attr("class","pulse").attr("r",6);g.append("circle").attr("r",3.5);return g})
     .attr("transform",`translate(${cx},${cy})`).lower();
-  gMarks.select("g.plabels").lower();gMarks.select("g.lab").lower();
+  if(state.group&&state.group.focus)gMarks.select("g.plabels").raise();else gMarks.select("g.plabels").lower();gMarks.select("g.lab").lower();
 }
 const tip=document.getElementById("tip");
 function showTip(c){const s=c.items[0];tip.hidden=false;tip.innerHTML="";
@@ -518,7 +534,11 @@ function choosePlace(p){
   const ids=new Set(state.stories.filter(s=>(feat?d3.geoContains(feat,[s.place.lon,s.place.lat]):hav(p.lat,p.lon,s.place.lat,s.place.lon)<=radius)||s.place.name===p.name||titleHas(s,p)).map(s=>s.id));
   state.group={ids,place:p.via||(lang==="ar"?p.ar:p.name),exact:true,focus:{...p,feat}};
   state.sel=null;gRoute.selectAll("*").remove();renderDetail();applyFocus();renderList();drawMarkers();drawLabels();listEl.scrollTop=0;
-  if(feat){const b=path.bounds(largest(feat));const [[x0,y0],[x1,y1]]=b;zoomTo((x0+x1)/2,(y0+y1)/2,Math.max(1,Math.min(60,0.7/Math.max((x1-x0)/W,(y1-y0)/H))))}
+  if(feat){const [[x0,y0],[x1,y1]]=path.bounds(largest(feat));
+    // fit the whole country between the filters (top) and the back button (bottom), leaving a side strip for the circles
+    const top=isPhone()?62:16,bot=60,aw=W-140,ah=H-top-bot;
+    const k=Math.max(1,Math.min(200,0.92*Math.min(aw/(x1-x0),ah/(y1-y0))));
+    zoomTo((x0+x1)/2+20/k,(y0+y1)/2-(top+ah/2-H/2)/k,k)}
   else{const c=proj([p.lon,p.lat]);zoomTo(c[0],c[1],Math.min(W,H)/2/kmPx(p.kind==="kuwait"?40:500))}
 }
 function select(id,fromList){
@@ -534,7 +554,7 @@ function select(id,fromList){
 // keep the page itself at normal size: two fingers zoom the map only (iPhone ignores user-scalable)
 for(const ev of ["gesturestart","gesturechange","gestureend"])document.addEventListener(ev,e=>e.preventDefault(),{passive:false});
 document.addEventListener("touchmove",e=>{if(e.touches.length>1&&!e.target.closest("#map"))e.preventDefault()},{passive:false});
-const zoom=d3.zoom().scaleExtent([1,120]).on("zoom",e=>{TR=e.transform;updBack();root.attr("transform",TR);restyle();drawLabels();drawMarkers();hideTip()});
+const zoom=d3.zoom().scaleExtent([1,220]).on("zoom",e=>{TR=e.transform;updBack();root.attr("transform",TR);restyle();drawLabels();drawMarkers();hideTip()});
 svg.call(zoom).on("dblclick.zoom",null);
 const RM=matchMedia("(prefers-reduced-motion: reduce)");
 function zoomTo(x,y,k){svg.transition().duration(RM.matches?0:650).call(zoom.transform,d3.zoomIdentity.translate(W/2,H/2).scale(k).translate(-x,-y))}
