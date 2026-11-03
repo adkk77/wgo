@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: wgo
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: REFRESH_MINUTES
+        value: "5"
+      - key: NODE_VERSION
+        value: "22"

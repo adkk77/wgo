@@ -1,0 +1,23 @@
+[
+  { "name": "Al Jazeera", "nameAr": "الجزيرة", "lang": "ar", "url": "https://news.google.com/rss/search?q=site:aljazeera.net+when:1d&hl=ar&gl=KW&ceid=KW:ar" },
+  { "name": "BBC Arabic", "nameAr": "بي بي سي عربي", "lang": "ar", "url": "https://feeds.bbci.co.uk/arabic/rss.xml" },
+  { "name": "KUNA", "nameAr": "كونا", "lang": "ar", "kuwaitLocal": true, "url": "https://news.google.com/rss/search?q=site:kuna.net.kw+when:1d&hl=ar&gl=KW&ceid=KW:ar" },
+  { "name": "Al Arabiya", "nameAr": "العربية", "lang": "ar", "url": "https://news.google.com/rss/search?q=site:alarabiya.net+when:1d&hl=ar&gl=KW&ceid=KW:ar" },
+  { "name": "Sky News Arabia", "nameAr": "سكاي نيوز عربية", "lang": "ar", "url": "https://news.google.com/rss/search?q=site:skynewsarabia.com+when:1d&hl=ar&gl=KW&ceid=KW:ar" },
+  { "name": "Al Qabas", "nameAr": "القبس", "lang": "ar", "kuwaitLocal": true, "url": "https://news.google.com/rss/search?q=site:alqabas.com+when:1d&hl=ar&gl=KW&ceid=KW:ar" },
+  { "name": "Al Rai", "nameAr": "الراي", "lang": "ar", "kuwaitLocal": true, "url": "https://news.google.com/rss/search?q=site:alraimedia.com+when:1d&hl=ar&gl=KW&ceid=KW:ar" },
+  { "name": "France 24 Arabic", "nameAr": "فرانس 24", "lang": "ar", "url": "https://www.france24.com/ar/rss" },
+  { "name": "DW Arabic", "nameAr": "دويتشه فيله", "lang": "ar", "url": "https://rss.dw.com/rdf/rss-ar-all" },
+
+  { "name": "Reuters", "nameAr": "رويترز", "lang": "en", "url": "https://news.google.com/rss/search?q=site:reuters.com+when:1d&hl=en-US&gl=US&ceid=US:en" },
+  { "name": "AP", "nameAr": "أسوشيتد برس", "lang": "en", "url": "https://news.google.com/rss/search?q=site:apnews.com+when:1d&hl=en-US&gl=US&ceid=US:en" },
+  { "name": "BBC News", "nameAr": "بي بي سي", "lang": "en", "url": "https://feeds.bbci.co.uk/news/world/rss.xml" },
+  { "name": "BBC Business", "nameAr": "بي بي سي", "lang": "en", "url": "https://feeds.bbci.co.uk/news/business/rss.xml" },
+  { "name": "Al Jazeera English", "nameAr": "الجزيرة الإنجليزية", "lang": "en", "url": "https://www.aljazeera.com/xml/rss/all.xml" },
+  { "name": "KUNA English", "nameAr": "كونا", "lang": "en", "kuwaitLocal": true, "url": "https://news.google.com/rss/search?q=site:kuna.net.kw+when:1d&hl=en-US&gl=KW&ceid=KW:en" },
+  { "name": "Times Kuwait", "nameAr": "تايمز الكويت", "lang": "en", "kuwaitLocal": true, "url": "https://timeskuwait.com/feed/" },
+  { "name": "Kuwait Times", "nameAr": "كويت تايمز", "lang": "en", "kuwaitLocal": true, "url": "https://kuwaittimes.com/feed/" },
+  { "name": "The Guardian", "nameAr": "الغارديان", "lang": "en", "url": "https://www.theguardian.com/world/rss" },
+  { "name": "UN News", "nameAr": "أخبار الأمم المتحدة", "lang": "en", "url": "https://news.un.org/feed/subscribe/en/news/all/rss.xml" },
+  { "name": "CNBC", "nameAr": "سي إن بي سي", "lang": "en", "url": "https://www.cnbc.com/id/100727362/device/rss/rss.html" }
+]
