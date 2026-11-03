@@ -23,8 +23,8 @@ const dir = mkdtempSync(join(tmpdir(), 'wgo-'));
 const feedsFile = join(dir, 'feeds.json');
 writeFileSync(feedsFile, JSON.stringify([
   { name: 'Sample Arabic', nameAr: 'عينة عربية', lang: 'ar', url: `${base}/ar.xml` },
-  { name: 'Al Qabas (sample)', nameAr: 'القبس', lang: 'ar', kuwaitLocal: true, url: `${base}/kw-ar.xml` },
-  { name: 'Sample English', nameAr: 'عينة إنجليزية', lang: 'en', url: `${base}/en.xml` },
+  { name: 'Al Qabas (sample)', nameAr: 'القبس', lang: 'ar', kuwaitLocal: true, url: `${base}/kw-ar.xml?news.google.com` },
+  { name: 'Sample English', nameAr: 'عينة إنجليزية', lang: 'en', url: `${base}/en.xml?news.google.com` },
   { name: 'Times Kuwait (sample)', nameAr: 'تايمز الكويت', lang: 'en', kuwaitLocal: true, url: `${base}/timeskuwait.xml` },
   { name: 'Broken feed', nameAr: 'مصدر معطل', lang: 'en', url: `${base}/down` },
 ]));
