@@ -294,7 +294,7 @@ function rebase(){const R0=6371.0088,r0=Math.PI/180,φ1=HOME.lat*r0;
     s.bearing=Math.round((Math.atan2(Math.sin(dλ)*Math.cos(φ2),Math.cos(φ1)*Math.sin(φ2)-Math.sin(φ1)*Math.cos(φ2)*Math.cos(dλ))/r0+360)%360)}}
 const POLL_MS=120000;
 const T={
-  ar:{tag:"ماذا يحدث حولك",legend:h=>`الحلقات تبيّن المسافة من ${h}. الشمال إلى الأعلى، وكل خبر في موقعه الحقيقي بالمسافة والاتجاه.`,homeQ:"اكتب موقعك: دولة أو مدينة",useGps:"📍 استخدم موقعي الحالي",gpsFail:"تعذّر تحديد موقعك",myPlace:"موقعي",homeTitle:"موقعك (مركز الخريطة)",
+  ar:{tag:"ماذا يحدث حولك",legend:h=>`الحلقات تبيّن المسافة من ${h}. الشمال إلى الأعلى، وكل خبر في موقعه الحقيقي بالمسافة والاتجاه.`,homeQ:"اختر موقعك أو أقرب مكان لك",noHome:"غير موجود، اختر أقرب مدينة لك أو دولتك",useGps:"📍 استخدم موقعي الحالي",gpsFail:"تعذّر تحديد موقعك",myPlace:"موقعي",homeTitle:"موقعك (مركز الخريطة)",
       gulf:"الخليج",world:"العالم",within:"ضمن",sortBy:"الترتيب",newest:"الأحدث",nearest:"الأقرب",all:"الكل",
       cats:{financial:"اقتصاد",political:"سياسة",war:"حرب",crisis:"أزمات",crime:"جريمة"},
       inKuwait:h=>`داخل ${h}`,km:"كم",dirs:["شمال","شمال شرق","شرق","جنوب شرق","جنوب","جنوب غرب","غرب","شمال غرب"],compass:["ش","ش ق","ق","ج ق","ج","ج غ","غ","ش غ"],
@@ -303,7 +303,7 @@ const T={
       none:"لا توجد أخبار بهذه الشروط. وسّع المسافة أو فعّل تصنيفات أكثر.",sources:"المصادر: ",failed:"(تعذّر الوصول)",
       switchTo:"English",nearby:n=>`${n} أخبار هنا`,new:"جديد",mapLabel:h=>`خريطة العالم ومركزها ${h}، والأخبار موزعة حسب المسافة والاتجاه`,
       zin:"تكبير",zout:"تصغير",newsList:"الأخبار",search:"ابحث عن دولة أو مدينة",kCountry:"دولة",kCity:"مدينة",kArea:"منطقة في الكويت",noPlace:"لا توجد نتائج",nonePlace:p=>`لا توجد أخبار عن ${p} في الوقت الحالي. ستظهر هنا فور نشرها.`,group:(n,p,ex)=>`أخبار ${p}${ex?"":" وما حولها"} (${n}) · من الأحدث`,showAll:"✕ كل الأخبار",back:"✕ العودة للخريطة",strikes:"🚀 ضربات",strikesOn:"خريطة الضربات",strikeN:n=>`${n} ضربة`,win:[["1","ساعة"],["6","٦ ساعات"],["24","٢٤ ساعة"],["all","الكل"]],noStrike:"لا توجد ضربات في هذه الفترة.",close:"إغلاق",collapse:"تصغير اللوحة",expand:"توسيع اللوحة",readBtn:s=>`اقرأ الخبر كاملاً في ${s}`},
-  en:{tag:"What’s going on around you",legend:h=>`Rings show distance from ${h}. Up is north. Every story sits at its true distance and bearing.`,homeQ:"Type your location: country or city",useGps:"📍 Use my current location",gpsFail:"Couldn’t find your location",myPlace:"My location",homeTitle:"Your location (map centre)",
+  en:{tag:"What’s going on around you",legend:h=>`Rings show distance from ${h}. Up is north. Every story sits at its true distance and bearing.`,homeQ:"Choose your location or a place nearby",noHome:"Not found. Choose the nearest city or your country",useGps:"📍 Use my current location",gpsFail:"Couldn’t find your location",myPlace:"My location",homeTitle:"Your location (map centre)",
       gulf:"Gulf",world:"World",within:"Within",sortBy:"Sort by",newest:"Newest",nearest:"Nearest",all:"All",
       cats:{financial:"Financial",political:"Political",war:"War",crisis:"Crises",crime:"Crime"},
       inKuwait:h=>`In ${h}`,km:"km",dirs:["N","NE","E","SE","S","SW","W","NW"],compass:["N","NE","E","SE","S","SW","W","NW"],
@@ -563,7 +563,7 @@ const qEl=document.getElementById("q"),qres=document.getElementById("qres");let 
 function renderQ(){qres.innerHTML="";qres.hidden=!qEl.value.trim()&&!qHome;qEl.setAttribute("aria-expanded",String(!qres.hidden));if(qres.hidden)return;
   if(qHome&&navigator.geolocation){const li=document.createElement("li");li.className="here";li.textContent=t().useGps;li.onmousedown=e=>{e.preventDefault();useGps()};qres.append(li)}
   if(!qEl.value.trim())return;
-  if(!qItems.length){const li=document.createElement("li");li.className="none";li.textContent=t().noPlace;qres.append(li);return}
+  if(!qItems.length){const li=document.createElement("li");li.className="none";li.textContent=qHome?t().noHome:t().noPlace;qres.append(li);return}
   qItems.forEach((p,i)=>{const li=document.createElement("li");li.setAttribute("role","option");li.setAttribute("aria-selected",String(i===qIdx));
     const m=document.createElement("span");m.textContent=p.via||(lang==="ar"?p.ar:p.name);const o=document.createElement("span");o.className="o";o.textContent=p.via?(lang==="ar"?p.ar:p.name):(lang==="ar"?p.name:p.ar);
     const k=document.createElement("span");k.className="k";k.textContent=p.kind==="country"?t().kCountry:p.kind==="kuwait"?t().kArea:t().kCity;
