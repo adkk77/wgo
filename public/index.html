@@ -98,6 +98,21 @@ svg#map:active{cursor:grabbing}
 .centre circle{fill:var(--kw)}
 .centre .pulse{fill:none;stroke:var(--kw);stroke-width:1.5}
 @media (prefers-reduced-motion:no-preference){.centre .pulse{animation:pulse 2.4s ease-out infinite}}
+.strikebtn[aria-pressed="true"]{background:var(--war);color:#fff;border-color:var(--war)}
+.strikebar{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:3;display:flex;gap:8px;align-items:center;background:var(--panel);border:1px solid var(--war);border-radius:999px;padding:4px 6px 4px 12px;font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.strikebar .seg{display:flex;gap:2px}
+.strikebar button{border:0;background:transparent;color:var(--ink-2);font:600 11.5px var(--f-body);padding:4px 8px;border-radius:999px;cursor:pointer}
+.strikebar button[aria-pressed="true"]{background:var(--war);color:#fff}
+.sarc{fill:none;stroke:var(--war);stroke-width:1.4;opacity:.55;pointer-events:none}
+.scomet{fill:none;stroke:var(--war);stroke-width:3;stroke-linecap:round;stroke-dasharray:10 90;animation:comet 2.2s linear infinite;pointer-events:none}
+.shit{fill:none;stroke:transparent;stroke-width:14;cursor:pointer}
+.sorigin{fill:var(--sea);stroke:var(--war);stroke-width:1.5}
+.simpact{fill:var(--war)}
+.sring{fill:none;stroke:var(--war);stroke-width:2;transform-box:fill-box;transform-origin:center;animation:impact 1.8s ease-out infinite}
+.slabel{font:600 10px var(--f-body);fill:var(--war);text-anchor:middle;paint-order:stroke;stroke:var(--sea);stroke-width:3px;pointer-events:none}
+@keyframes comet{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
+@keyframes impact{from{transform:scale(.4);opacity:1}to{transform:scale(2.4);opacity:0}}
+@media (prefers-reduced-motion:reduce){.scomet,.sring{animation:none}}
 @keyframes pulse{from{r:6;opacity:.9}to{r:22;opacity:0}}
 .mapctl{position:absolute;inset-inline-end:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px}
 .backmap{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:3;background:var(--kw);color:#111;border:0;border-radius:999px;padding:8px 16px;font:700 13px var(--f-body);cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.35);white-space:nowrap}
@@ -172,7 +187,9 @@ aside{min-width:0;min-height:0;display:flex;flex-direction:column;border-inline-
 :root[dir="rtl"] .mf select{padding:7px 12px 7px 26px;background-position:left 7px center,left 12px center}
 .mf select:focus-visible{outline:2px solid var(--kw);outline-offset:2px}
 html,body{touch-action:pan-x pan-y}
+@media (min-width:821px){.backmap{bottom:58px}}
 @media (max-width:820px){
+  .strikebar{top:58px;font-size:11px;padding:3px 4px 3px 10px;gap:4px}.strikebar button{padding:3px 6px;font-size:10.5px}
   .search input{font-size:16px}
   /* phone: the map stays pinned at the top; only the news list scrolls */
   body{overflow:hidden}
@@ -217,12 +234,14 @@ html,body{touch-action:pan-x pan-y}
   <div class="stage">
     <svg id="map" role="img"></svg>
     <div class="legend" data-t="legend"></div>
+    <div class="strikebar" id="strikebar" hidden><span id="strikeN"></span><span class="seg" id="swin"></span></div>
     <button id="back" class="backmap" type="button" data-t="back" hidden></button>
     <div class="mapctl">
       <button id="zin" type="button">+</button>
       <button id="zout" type="button">−</button>
       <button id="zgulf" class="txt" type="button" data-t="gulf"></button>
       <button id="zworld" class="txt" type="button" data-t="world"></button>
+      <button id="zstrike" class="txt strikebtn" type="button" aria-pressed="false"></button>
     </div>
     <div class="mapfilters">
       <div class="mf r"><select id="fcat"></select></div>
@@ -269,7 +288,7 @@ const T={
       offline:"تعذّر الاتصال بالخادم. سنحاول مجدداً بعد دقيقتين.",waiting:"الخادم يجمع الأخبار الآن. ستظهر خلال دقيقة.",
       none:"لا توجد أخبار بهذه الشروط. وسّع المسافة أو فعّل تصنيفات أكثر.",sources:"المصادر: ",failed:"(تعذّر الوصول)",
       switchTo:"English",nearby:n=>`${n} أخبار هنا`,new:"جديد",mapLabel:"خريطة العالم ومركزها الكويت، والأخبار موزعة حسب المسافة والاتجاه",
-      zin:"تكبير",zout:"تصغير",newsList:"الأخبار",search:"ابحث عن دولة أو مدينة",kCountry:"دولة",kCity:"مدينة",kArea:"منطقة في الكويت",noPlace:"لا توجد نتائج",nonePlace:p=>`لا توجد أخبار عن ${p} في الوقت الحالي. ستظهر هنا فور نشرها.`,group:(n,p,ex)=>`أخبار ${p}${ex?"":" وما حولها"} (${n}) · من الأحدث`,showAll:"✕ كل الأخبار",back:"✕ العودة للخريطة",close:"إغلاق",collapse:"تصغير اللوحة",expand:"توسيع اللوحة",readBtn:s=>`اقرأ الخبر كاملاً في ${s}`},
+      zin:"تكبير",zout:"تصغير",newsList:"الأخبار",search:"ابحث عن دولة أو مدينة",kCountry:"دولة",kCity:"مدينة",kArea:"منطقة في الكويت",noPlace:"لا توجد نتائج",nonePlace:p=>`لا توجد أخبار عن ${p} في الوقت الحالي. ستظهر هنا فور نشرها.`,group:(n,p,ex)=>`أخبار ${p}${ex?"":" وما حولها"} (${n}) · من الأحدث`,showAll:"✕ كل الأخبار",back:"✕ العودة للخريطة",strikes:"🚀 ضربات",strikesOn:"خريطة الضربات",strikeN:n=>`${n} ضربة`,win:[["1","ساعة"],["6","٦ ساعات"],["24","٢٤ ساعة"],["all","الكل"]],noStrike:"لا توجد ضربات في هذه الفترة.",close:"إغلاق",collapse:"تصغير اللوحة",expand:"توسيع اللوحة",readBtn:s=>`اقرأ الخبر كاملاً في ${s}`},
   en:{tag:"What’s going on around you",legend:"Rings show distance from Kuwait City. Up is north. Every story sits at its true distance and bearing.",
       gulf:"Gulf",world:"World",within:"Within",sortBy:"Sort by",newest:"Newest",nearest:"Nearest",all:"All",
       cats:{financial:"Financial",political:"Political",war:"War",crisis:"Crises",crime:"Crime"},
@@ -278,11 +297,11 @@ const T={
       offline:"Can't reach the server. Trying again in two minutes.",waiting:"The server is collecting stories now. They'll appear within a minute.",
       none:"No stories match. Widen the distance or turn on more categories.",sources:"Sources: ",failed:"(unreachable)",
       switchTo:"العربية",nearby:n=>`${n} stories here`,new:"New",mapLabel:"Map of the world centred on Kuwait, with stories placed by distance and direction",
-      zin:"Zoom in",zout:"Zoom out",newsList:"News",search:"Search a country or city",kCountry:"Country",kCity:"City",kArea:"Area in Kuwait",noPlace:"No matches",nonePlace:p=>`No stories about ${p} right now. They'll appear here as soon as they're published.`,group:(n,p,ex)=>`${n} stories ${ex?"in":"in and around"} ${p} · newest first`,showAll:"✕ All news",back:"✕ Back to world map",close:"Close",collapse:"Collapse panel",expand:"Expand panel",readBtn:s=>`Read the full story at ${s} ↗`}
+      zin:"Zoom in",zout:"Zoom out",newsList:"News",search:"Search a country or city",kCountry:"Country",kCity:"City",kArea:"Area in Kuwait",noPlace:"No matches",nonePlace:p=>`No stories about ${p} right now. They'll appear here as soon as they're published.`,group:(n,p,ex)=>`${n} stories ${ex?"in":"in and around"} ${p} · newest first`,showAll:"✕ All news",back:"✕ Back to world map",strikes:"🚀 Strikes",strikesOn:"Strike map",strikeN:n=>`${n} strike${n==1?"":"s"}`,win:[["1","1h"],["6","6h"],["24","24h"],["all","All"]],noStrike:"No strikes in this time window.",close:"Close",collapse:"Collapse panel",expand:"Expand panel",readBtn:s=>`Read the full story at ${s} ↗`}
 };
 const CATV={financial:"--fin",political:"--pol",war:"--war",crisis:"--cri",crime:"--crm"};
 let lang="ar";try{const q=new URLSearchParams(location.search).get("lang");lang=q==="en"||q==="ar"?q:(localStorage.getItem("wgo-lang")||"ar")}catch(e){}
-const state={cats:new Set(Object.keys(CATV)),range:Infinity,sort:"new",sel:null,stories:[],sources:[],updated:null,seen:new Set(),firstLoad:true,error:false};
+const state={strikes:false,swin:"24",cats:new Set(Object.keys(CATV)),range:Infinity,sort:"new",sel:null,stories:[],sources:[],updated:null,seen:new Set(),firstLoad:true,error:false};
 const col=c=>getComputedStyle(document.documentElement).getPropertyValue(CATV[c]).trim();
 const t=()=>T[lang];
 const nf=()=>new Intl.NumberFormat(lang==="ar"?"ar-KW":"en-GB",{maximumFractionDigits:0});
@@ -329,7 +348,8 @@ function renderRange(){rangeEl.innerHTML="";for(const v of RANGES){const b=docum
   b.textContent=v===Infinity?t().world:`${nf().format(v)} ${t().km}`;b.setAttribute("aria-pressed",String(v===state.range));
   b.onclick=()=>{state.range=v;renderAll();v===Infinity?zoomWorld():zoomToKm(v*1.15)};rangeEl.append(b)}}
 document.querySelectorAll("#sort button").forEach(b=>b.onclick=()=>{state.sort=b.dataset.v;renderAll()});
-const visible=()=>state.stories.filter(s=>state.cats.has(s.category)&&s.km<=state.range);
+const inWin=s=>state.swin==="all"||Date.now()-Date.parse(s.published)<=+state.swin*3600e3;
+const visible=()=>state.strikes?state.stories.filter(s=>s.strike&&inWin(s)&&s.km<=state.range):state.stories.filter(s=>state.cats.has(s.category)&&s.km<=state.range);
 
 /* ---------- list ---------- */
 const listEl=document.getElementById("list");
@@ -344,7 +364,7 @@ function renderList(){
     bar.append(tx,b);listEl.append(bar);
     v=v.slice().sort((a,b)=>b.published.localeCompare(a.published));
   } else v=v.slice().sort(state.sort==="near"?(a,b)=>a.km-b.km||b.published.localeCompare(a.published):(a,b)=>b.published.localeCompare(a.published)||a.km-b.km);
-  if(!v.length){const d=document.createElement("div");d.className="empty";d.textContent=state.group?t().nonePlace(state.group.place):t().none;listEl.append(d);return}
+  if(!v.length){const d=document.createElement("div");d.className="empty";d.textContent=state.group?t().nonePlace(state.group.place):state.strikes?t().noStrike:t().none;listEl.append(d);return}
   const frag=document.createDocumentFragment();
   for(const s of v.slice(0,250)){
     const el=document.createElement("div");el.className="story"+(state.sel===s.id?" sel":"");el.tabIndex=0;el.dataset.id=s.id;
@@ -355,7 +375,7 @@ function renderList(){
     const cat=document.createElement("span");cat.className="cat";cat.style.color=col(s.category);cat.textContent=t().cats[s.category];
     const src=document.createElement("span");src.textContent=sourceName(s);
     const tm=document.createElement("span");tm.textContent=ago(s.published);
-    const geo=document.createElement("span");geo.className="geo";geo.textContent=geoText(s);
+    const geo=document.createElement("span");geo.className="geo";geo.textContent=state.strikes&&s.strike?(lang==="ar"?`${s.strike.from.ar} ← ${s.strike.to.ar}`:`${s.strike.from.name} → ${s.strike.to.name}`):geoText(s);
     meta.append(cat,src,tm);
     if(s._new){const n=document.createElement("span");n.className="new-badge";n.textContent=t().new;meta.append(n)}
     meta.append(geo);
@@ -554,7 +574,7 @@ function select(id,fromList){
 // keep the page itself at normal size: two fingers zoom the map only (iPhone ignores user-scalable)
 for(const ev of ["gesturestart","gesturechange","gestureend"])document.addEventListener(ev,e=>e.preventDefault(),{passive:false});
 document.addEventListener("touchmove",e=>{if(e.touches.length>1&&!e.target.closest("#map"))e.preventDefault()},{passive:false});
-const zoom=d3.zoom().scaleExtent([1,220]).on("zoom",e=>{TR=e.transform;updBack();root.attr("transform",TR);restyle();drawLabels();drawMarkers();hideTip()});
+const zoom=d3.zoom().scaleExtent([1,220]).on("zoom",e=>{TR=e.transform;updBack();root.attr("transform",TR);restyle();drawLabels();drawMarkers();drawStrikes();hideTip()});
 svg.call(zoom).on("dblclick.zoom",null);
 const RM=matchMedia("(prefers-reduced-motion: reduce)");
 function zoomTo(x,y,k){svg.transition().duration(RM.matches?0:650).call(zoom.transform,d3.zoomIdentity.translate(W/2,H/2).scale(k).translate(-x,-y))}
@@ -562,6 +582,30 @@ function zoomToKm(km){const c=proj(KW);zoomTo(c[0],c[1],Math.min(W,H)/2/kmPx(km)
 function zoomWorld(){zoomTo(W/2,H/2,1)}
 document.getElementById("zin").onclick=()=>svg.transition().duration(300).call(zoom.scaleBy,1.8);
 document.getElementById("zout").onclick=()=>svg.transition().duration(300).call(zoom.scaleBy,1/1.8);
+/* ---------- strike map: arcs from who fired to where it landed ---------- */
+function drawStrikes(){
+  let L=gMarks.select("g.strikes");if(L.empty())L=gMarks.insert("g",":first-child").attr("class","strikes");
+  const data=state.strikes?visible():[];
+  const g=L.selectAll("g.sk").data(data,s=>s.id).join(e=>{const g=e.append("g").attr("class","sk");
+    g.append("path").attr("class","sarc");g.append("path").attr("class","scomet").attr("pathLength",100);g.append("path").attr("class","shit");
+    g.append("circle").attr("class","sorigin").attr("r",3.5);g.append("circle").attr("class","sring").attr("r",7);g.append("circle").attr("class","simpact").attr("r",3.5);return g});
+  g.each(function(s,i){const a=TR.apply(proj([s.strike.from.lon,s.strike.from.lat])),b=TR.apply(proj([s.strike.to.lon,s.strike.to.lat]));
+    const dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy)||1,bend=Math.min(.35*len,140);
+    const c=[(a[0]+b[0])/2-dy/len*bend,(a[1]+b[1])/2+dx/len*bend];const d=`M${a[0]},${a[1]}Q${c[0]},${c[1]} ${b[0]},${b[1]}`;
+    const el=d3.select(this);el.selectAll("path").attr("d",d);el.select(".scomet").style("animation-delay",`${-(i*0.37)%2.2}s`);
+    el.select(".sorigin").attr("cx",a[0]).attr("cy",a[1]);el.selectAll(".sring,.simpact").attr("cx",b[0]).attr("cy",b[1])});
+  g.select(".shit").on("click",(e,s)=>select(s.id,false));
+  // name each launch site once
+  const seen=new Map();for(const s of data){const k=s.strike.from.name;if(!seen.has(k))seen.set(k,s.strike.from)}
+  L.selectAll("text.slabel").data([...seen.values()],d=>d.name).join("text").attr("class","slabel")
+    .each(function(d){const [x,y]=TR.apply(proj([d.lon,d.lat]));d3.select(this).attr("x",x).attr("y",y-9).text(lang==="ar"?d.ar:d.name)});
+  L.raise();gMarks.selectAll("g.marker").raise();
+}
+function renderStrikeUI(){const b=document.getElementById("zstrike");b.textContent=t().strikes;b.setAttribute("aria-pressed",String(state.strikes));
+  const bar=document.getElementById("strikebar");bar.hidden=!state.strikes;if(!state.strikes)return;
+  document.getElementById("strikeN").textContent=t().strikeN(nf().format(visible().length));
+  const seg=document.getElementById("swin");seg.innerHTML="";for(const [v,l] of t().win){const x=document.createElement("button");x.type="button";x.textContent=l;x.setAttribute("aria-pressed",String(state.swin===v));x.onclick=()=>{state.swin=v;renderAll()};seg.append(x)}}
+document.getElementById("zstrike").onclick=()=>{state.strikes=!state.strikes;state.group=null;qEl.value="";applyFocus();state.sel=null;gRoute.selectAll("*").remove();renderAll();if(state.strikes)zoomToKm(2600);updBack()};
 document.getElementById("zgulf").onclick=()=>zoomToKm(1300);
 document.getElementById("zworld").onclick=()=>{state.range=Infinity;renderAll();zoomWorld()};
 
@@ -607,7 +651,7 @@ document.getElementById("fsort").onchange=e=>{state.sort=e.target.value;renderAl
 function renderAll(){
   if(state.sel!==null&&!visible().some(s=>s.id===state.sel)){state.sel=null;gRoute.selectAll("*").remove()}
   renderChips();renderRange();document.querySelectorAll("#sort button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===state.sort)));
-  restyle();renderList();drawMarkers();drawLabels();renderStatus();renderDetail();
+  restyle();renderList();drawMarkers();drawLabels();drawStrikes();renderStrikeUI();renderStatus();renderDetail();
   document.getElementById("dropn").textContent=`${nf().format(visible().length)}`;
   renderPhoneFilters();
 }
