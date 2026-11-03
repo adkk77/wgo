@@ -501,6 +501,16 @@ function showTip(c){const s=c.items[0];tip.hidden=false;tip.innerHTML="";
   tip.style.left=Math.max(6,Math.min(c.x+14,W-270))+"px";tip.style.top=Math.max(6,Math.min(c.y+12,H-100))+"px"}
 function hideTip(){tip.hidden=true}
 // A numbered circle lists all its stories, newest first, above the regular list.
+function clusterPlace(c){if(!FEATS)return null;
+  const featOf=p=>p&&p.kind==="country"?FEATS.find(f=>f.id===p.atlasId)||null:null;
+  const byName=n=>PLACES.find(p=>p.name===n.replace(/, Kuwait$/,""));
+  if(c.items.every(isLocal)){const p=PLACES.find(p=>p.kind==="country"&&p.atlasId==="414");return p?{...p,feat:featOf(p)}:null}
+  const names=new Set(c.items.map(s=>s.place.name));
+  if(names.size===1){const p=byName([...names][0]);if(p)return {...p,feat:featOf(p)}}
+  // all in one country?
+  const f=FEATS.find(f=>d3.geoContains(f,[c.items[0].place.lon,c.items[0].place.lat]));
+  if(f&&c.items.every(s=>d3.geoContains(f,[s.place.lon,s.place.lat]))){const p=PLACES.find(p=>p.kind==="country"&&p.atlasId===f.id);if(p)return {...p,feat:f}}
+  return null}
 function clickCluster(c){hideTip();
   if(c.items.length===1)return select(c.items[0].id,false);
   const counts={};for(const s of c.items){const k=placeName(s);counts[k]=(counts[k]||0)+1}
@@ -508,7 +518,10 @@ function clickCluster(c){hideTip();
   state.group={ids:new Set(c.items.map(s=>s.id)),place:top,exact:Object.keys(counts).length===1};applyFocus();updBack();qEl.value="";
   state.sel=null;gRoute.selectAll("*").remove();renderDetail();renderList();drawMarkers();listEl.scrollTop=0;
   if(!isPhone())listEl.scrollIntoView({block:"nearest"});
-  // zoom in on the circle so its stories spread out on the map
+  // Like a search: show the whole country (or the city) with the circles beside it.
+  const F=clusterPlace(c);
+  if(F){state.group.focus=F;applyFocus();drawMarkers();drawLabels();return zoomToPlace(F,F.feat)}
+  // otherwise zoom in on the circle so its stories spread out on the map
   const pts=c.items.map(s=>proj([s.place.lon,s.place.lat]));
   const [x0,x1]=d3.extent(pts,p=>p[0]),[y0,y1]=d3.extent(pts,p=>p[1]);
   const span=Math.max((x1-x0)/W,(y1-y0)/H);
@@ -554,6 +567,9 @@ function choosePlace(p){
   const ids=new Set(state.stories.filter(s=>(feat?d3.geoContains(feat,[s.place.lon,s.place.lat]):hav(p.lat,p.lon,s.place.lat,s.place.lon)<=radius)||s.place.name===p.name||titleHas(s,p)).map(s=>s.id));
   state.group={ids,place:p.via||(lang==="ar"?p.ar:p.name),exact:true,focus:{...p,feat}};
   state.sel=null;gRoute.selectAll("*").remove();renderDetail();applyFocus();renderList();drawMarkers();drawLabels();listEl.scrollTop=0;
+  zoomToPlace(p,feat);
+}
+function zoomToPlace(p,feat){
   if(feat){const [[x0,y0],[x1,y1]]=path.bounds(largest(feat));
     // fit the whole country between the filters (top) and the back button (bottom), leaving a side strip for the circles
     const top=isPhone()?62:16,bot=60,aw=W-140,ah=H-top-bot;
