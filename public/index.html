@@ -45,7 +45,10 @@ header{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px 1
 .brand{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:800;font-size:26px;letter-spacing:-.02em;line-height:1;direction:ltr}
 .brand b{color:var(--kw)}
 .tag{color:var(--ink-2);font-size:13px}
-.search{position:relative;flex:1 1 200px;max-width:300px;min-width:0}
+.search{position:relative;flex:1 1 200px;max-width:380px;min-width:0;display:flex;gap:6px;align-items:center}
+.search input{flex:1;min-width:0}
+.homebtn{flex:none;max-width:45%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid var(--kw);background:color-mix(in srgb,var(--kw) 14%,var(--chip));color:var(--ink);border-radius:999px;padding:6px 12px;font:600 13px var(--f-body);cursor:pointer}
+.qres li.here{color:var(--kw);font-weight:600}
 .search input{width:100%;border:1px solid var(--rule);background:var(--chip);color:var(--ink);border-radius:999px;padding:6px 14px;font:500 13px var(--f-body);outline:none}
 .search input:focus{border-color:var(--kw)}
 .search input::placeholder{color:var(--ink-3)}
@@ -225,6 +228,7 @@ html,body{touch-action:pan-x pan-y}
     <div class="brand">WG<b>O</b></div>
     <div class="tag" data-t="tag"></div>
     <div class="search" role="search">
+      <button id="home" class="homebtn" type="button"></button>
       <input id="q" type="search" autocomplete="off" spellcheck="false" aria-autocomplete="list" aria-controls="qres" aria-expanded="false">
       <ul class="qres" id="qres" role="listbox" hidden></ul>
     </div>
@@ -277,26 +281,36 @@ html,body{touch-action:pan-x pan-y}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <script>
-const KW=[47.9783,29.3759];
+// The map centre: the user's location (Kuwait City until they choose one). Saved on this device.
+const HOME_DEFAULT={name:"Kuwait City",ar:"مدينة الكويت",lat:29.3759,lon:47.9783,atlasId:"414",cname:"Kuwait",car:"الكويت"};
+let HOME=HOME_DEFAULT;try{const h=JSON.parse(localStorage.getItem("wgo-home")||"null");if(h&&isFinite(h.lat)&&isFinite(h.lon))HOME=h}catch(e){}
+const KW=[HOME.lon,HOME.lat];
+const homeName=()=>lang==="ar"?HOME.ar:HOME.name;
+const homeCountry=()=>lang==="ar"?(HOME.car||HOME.ar):(HOME.cname||HOME.name);
+// distance and direction of each story from the user's location
+function rebase(){const R0=6371.0088,r0=Math.PI/180,φ1=HOME.lat*r0;
+  for(const s of state.stories){const φ2=s.place.lat*r0,dλ=(s.place.lon-HOME.lon)*r0,dφ=φ2-φ1;
+    const a=Math.sin(dφ/2)**2+Math.cos(φ1)*Math.cos(φ2)*Math.sin(dλ/2)**2;s.km=Math.round(2*R0*Math.asin(Math.min(1,Math.sqrt(a))));
+    s.bearing=Math.round((Math.atan2(Math.sin(dλ)*Math.cos(φ2),Math.cos(φ1)*Math.sin(φ2)-Math.sin(φ1)*Math.cos(φ2)*Math.cos(dλ))/r0+360)%360)}}
 const POLL_MS=120000;
 const T={
-  ar:{tag:"ماذا يحدث حولك",legend:"الحلقات تبيّن المسافة من مدينة الكويت. الشمال إلى الأعلى، وكل خبر في موقعه الحقيقي بالمسافة والاتجاه.",
+  ar:{tag:"ماذا يحدث حولك",legend:h=>`الحلقات تبيّن المسافة من ${h}. الشمال إلى الأعلى، وكل خبر في موقعه الحقيقي بالمسافة والاتجاه.`,homeQ:"اكتب موقعك: دولة أو مدينة",useGps:"📍 استخدم موقعي الحالي",gpsFail:"تعذّر تحديد موقعك",myPlace:"موقعي",homeTitle:"موقعك (مركز الخريطة)",
       gulf:"الخليج",world:"العالم",within:"ضمن",sortBy:"الترتيب",newest:"الأحدث",nearest:"الأقرب",all:"الكل",
       cats:{financial:"اقتصاد",political:"سياسة",war:"حرب",crisis:"أزمات",crime:"جريمة"},
-      inKuwait:"داخل الكويت",km:"كم",dirs:["شمال","شمال شرق","شرق","جنوب شرق","جنوب","جنوب غرب","غرب","شمال غرب"],compass:["ش","ش ق","ق","ج ق","ج","ج غ","غ","ش غ"],
+      inKuwait:h=>`داخل ${h}`,km:"كم",dirs:["شمال","شمال شرق","شرق","جنوب شرق","جنوب","جنوب غرب","غرب","شمال غرب"],compass:["ش","ش ق","ق","ج ق","ج","ج غ","غ","ش غ"],
       read:s=>`اقرأ الخبر في ${s}`,stories:n=>`عدد الأخبار ${n}`,updated:t=>`مباشر · آخر تحديث ${t}`,loading:"جارٍ جلب الأخبار…",
       offline:"تعذّر الاتصال بالخادم. سنحاول مجدداً بعد دقيقتين.",waiting:"الخادم يجمع الأخبار الآن. ستظهر خلال دقيقة.",
       none:"لا توجد أخبار بهذه الشروط. وسّع المسافة أو فعّل تصنيفات أكثر.",sources:"المصادر: ",failed:"(تعذّر الوصول)",
-      switchTo:"English",nearby:n=>`${n} أخبار هنا`,new:"جديد",mapLabel:"خريطة العالم ومركزها الكويت، والأخبار موزعة حسب المسافة والاتجاه",
+      switchTo:"English",nearby:n=>`${n} أخبار هنا`,new:"جديد",mapLabel:h=>`خريطة العالم ومركزها ${h}، والأخبار موزعة حسب المسافة والاتجاه`,
       zin:"تكبير",zout:"تصغير",newsList:"الأخبار",search:"ابحث عن دولة أو مدينة",kCountry:"دولة",kCity:"مدينة",kArea:"منطقة في الكويت",noPlace:"لا توجد نتائج",nonePlace:p=>`لا توجد أخبار عن ${p} في الوقت الحالي. ستظهر هنا فور نشرها.`,group:(n,p,ex)=>`أخبار ${p}${ex?"":" وما حولها"} (${n}) · من الأحدث`,showAll:"✕ كل الأخبار",back:"✕ العودة للخريطة",strikes:"🚀 ضربات",strikesOn:"خريطة الضربات",strikeN:n=>`${n} ضربة`,win:[["1","ساعة"],["6","٦ ساعات"],["24","٢٤ ساعة"],["all","الكل"]],noStrike:"لا توجد ضربات في هذه الفترة.",close:"إغلاق",collapse:"تصغير اللوحة",expand:"توسيع اللوحة",readBtn:s=>`اقرأ الخبر كاملاً في ${s}`},
-  en:{tag:"What’s going on around you",legend:"Rings show distance from Kuwait City. Up is north. Every story sits at its true distance and bearing.",
+  en:{tag:"What’s going on around you",legend:h=>`Rings show distance from ${h}. Up is north. Every story sits at its true distance and bearing.`,homeQ:"Type your location: country or city",useGps:"📍 Use my current location",gpsFail:"Couldn’t find your location",myPlace:"My location",homeTitle:"Your location (map centre)",
       gulf:"Gulf",world:"World",within:"Within",sortBy:"Sort by",newest:"Newest",nearest:"Nearest",all:"All",
       cats:{financial:"Financial",political:"Political",war:"War",crisis:"Crises",crime:"Crime"},
-      inKuwait:"In Kuwait",km:"km",dirs:["N","NE","E","SE","S","SW","W","NW"],compass:["N","NE","E","SE","S","SW","W","NW"],
+      inKuwait:h=>`In ${h}`,km:"km",dirs:["N","NE","E","SE","S","SW","W","NW"],compass:["N","NE","E","SE","S","SW","W","NW"],
       read:s=>`Read at ${s} ↗`,stories:n=>`${n} stories`,updated:t=>`Live · updated ${t}`,loading:"Fetching the news…",
       offline:"Can't reach the server. Trying again in two minutes.",waiting:"The server is collecting stories now. They'll appear within a minute.",
       none:"No stories match. Widen the distance or turn on more categories.",sources:"Sources: ",failed:"(unreachable)",
-      switchTo:"العربية",nearby:n=>`${n} stories here`,new:"New",mapLabel:"Map of the world centred on Kuwait, with stories placed by distance and direction",
+      switchTo:"العربية",nearby:n=>`${n} stories here`,new:"New",mapLabel:h=>`Map of the world centred on ${h}, with stories placed by distance and direction`,
       zin:"Zoom in",zout:"Zoom out",newsList:"News",search:"Search a country or city",kCountry:"Country",kCity:"City",kArea:"Area in Kuwait",noPlace:"No matches",nonePlace:p=>`No stories about ${p} right now. They'll appear here as soon as they're published.`,group:(n,p,ex)=>`${n} stories ${ex?"in":"in and around"} ${p} · newest first`,showAll:"✕ All news",back:"✕ Back to world map",strikes:"🚀 Strikes",strikesOn:"Strike map",strikeN:n=>`${n} strike${n==1?"":"s"}`,win:[["1","1h"],["6","6h"],["24","24h"],["all","All"]],noStrike:"No strikes in this time window.",close:"Close",collapse:"Collapse panel",expand:"Expand panel",readBtn:s=>`Read the full story at ${s} ↗`}
 };
 const CATV={financial:"--fin",political:"--pol",war:"--war",crisis:"--cri",crime:"--crm"};
@@ -310,18 +324,18 @@ function ago(iso){const s=(Date.now()-Date.parse(iso))/1000;
   if(s<60)return rtf().format(0,"minute");if(s<3600)return rtf().format(-Math.round(s/60),"minute");
   if(s<86400)return rtf().format(-Math.round(s/3600),"hour");return rtf().format(-Math.round(s/86400),"day")}
 const isLocal=s=>s.km<120;
-function geoText(s){if(isLocal(s))return t().inKuwait;return `${nf().format(s.km)} ${t().km} · ${t().dirs[Math.round(s.bearing/45)%8]}`}
+function geoText(s){if(isLocal(s))return t().inKuwait(homeCountry());return `${nf().format(s.km)} ${t().km} · ${t().dirs[Math.round(s.bearing/45)%8]}`}
 const placeName=s=>lang==="ar"?(s.place.ar||s.place.name):s.place.name;
 const sourceName=s=>lang==="ar"?(s.sourceAr||s.source):s.source;
 
 /* ---------- static text ---------- */
 function applyLang(){
   document.documentElement.lang=lang;document.documentElement.dir=lang==="ar"?"rtl":"ltr";
-  document.querySelectorAll("[data-t]").forEach(el=>el.textContent=t()[el.dataset.t]);
+  document.querySelectorAll("[data-t]").forEach(el=>{const v=t()[el.dataset.t];el.textContent=typeof v==="function"?v(homeName()):v});
   document.getElementById("lang").textContent=t().switchTo;
   if(typeof renderThemeBtn==="function"&&document.getElementById("theme").innerHTML)renderThemeBtn();
   document.getElementById("zin").setAttribute("aria-label",t().zin);document.getElementById("zout").setAttribute("aria-label",t().zout);
-  document.getElementById("map").setAttribute("aria-label",t().mapLabel);
+  document.getElementById("map").setAttribute("aria-label",t().mapLabel(homeName()));renderHomeBtn();
   const q=document.getElementById("q");q.placeholder=t().search;q.setAttribute("aria-label",t().search);
   document.title=lang==="ar"?"WGO · ماذا يحدث حولك":"WGO · What’s going on around you";
 }
@@ -413,7 +427,7 @@ function drawBase(){
   gBase.append("path").datum({type:"Sphere"}).attr("class","sphere").attr("d",path);
   gBase.append("path").datum(d3.geoGraticule10()).attr("class","grat").attr("d",path);
   if(WORLD){FEATS=FEATS||topojson.feature(WORLD,WORLD.objects.countries).features;
-    landSel=gBase.append("g").selectAll("path").data(FEATS).join("path").attr("class",d=>d.id==="414"?"kw":"land").attr("d",path);
+    landSel=gBase.append("g").selectAll("path").data(FEATS).join("path").attr("class",d=>d.id===HOME.atlasId?"kw":"land").attr("d",path);
     for(const f of FEATS){f._b=path.bounds(f);f._c=path.centroid(largest(f))}
     applyFocus();}
   for(let i=0;i<8;i++)gRings.append("path").datum({type:"LineString",coordinates:[KW,destination(i*45,170)]}).attr("class","spoke").attr("d",path);
@@ -505,7 +519,7 @@ function hideTip(){tip.hidden=true}
 function clusterPlace(c){if(!FEATS)return null;
   const featOf=p=>p&&p.kind==="country"?FEATS.find(f=>f.id===p.atlasId)||null:null;
   const byName=n=>PLACES.find(p=>p.name===n.replace(/, Kuwait$/,""));
-  if(c.items.every(isLocal)){const p=PLACES.find(p=>p.kind==="country"&&p.atlasId==="414");return p?{...p,feat:featOf(p)}:null}
+  if(c.items.every(isLocal)){const p=PLACES.find(p=>p.kind==="country"&&p.atlasId===HOME.atlasId);return p?{...p,feat:featOf(p)}:null}
   const names=new Set(c.items.map(s=>s.place.name));
   if(names.size===1){const p=byName([...names][0]);if(p)return {...p,feat:featOf(p)}}
   // all in one country?
@@ -545,19 +559,37 @@ function searchPlaces(q){q=normQ(q);if(!q)return [];
       if(s>=0){s=s*2+isAlt;if(best<0||s<best){best=s;via=isAlt?n:null}}}
     if(best>=0)sc.push({p,via,s:best*10+(p.kind==="country"?0:p.kind==="place"?1:2)})}
   return sc.sort((a,b)=>a.s-b.s).slice(0,8).map(x=>({...x.p,via:x.via}))}
-const qEl=document.getElementById("q"),qres=document.getElementById("qres");let qItems=[],qIdx=-1;
-function renderQ(){qres.innerHTML="";qres.hidden=!qEl.value.trim();qEl.setAttribute("aria-expanded",String(!qres.hidden));if(qres.hidden)return;
+const qEl=document.getElementById("q"),qres=document.getElementById("qres");let qItems=[],qIdx=-1,qHome=false;
+function renderQ(){qres.innerHTML="";qres.hidden=!qEl.value.trim()&&!qHome;qEl.setAttribute("aria-expanded",String(!qres.hidden));if(qres.hidden)return;
+  if(qHome&&navigator.geolocation){const li=document.createElement("li");li.className="here";li.textContent=t().useGps;li.onmousedown=e=>{e.preventDefault();useGps()};qres.append(li)}
+  if(!qEl.value.trim())return;
   if(!qItems.length){const li=document.createElement("li");li.className="none";li.textContent=t().noPlace;qres.append(li);return}
   qItems.forEach((p,i)=>{const li=document.createElement("li");li.setAttribute("role","option");li.setAttribute("aria-selected",String(i===qIdx));
     const m=document.createElement("span");m.textContent=p.via||(lang==="ar"?p.ar:p.name);const o=document.createElement("span");o.className="o";o.textContent=p.via?(lang==="ar"?p.ar:p.name):(lang==="ar"?p.name:p.ar);
     const k=document.createElement("span");k.className="k";k.textContent=p.kind==="country"?t().kCountry:p.kind==="kuwait"?t().kArea:t().kCity;
-    li.append(m,o,k);li.onmousedown=e=>{e.preventDefault();choosePlace(p)};qres.append(li)})}
+    li.append(m,o,k);li.onmousedown=e=>{e.preventDefault();pick(p)};qres.append(li)})}
+const pick=p=>qHome?setHome(p):choosePlace(p);
 qEl.addEventListener("input",()=>{qItems=searchPlaces(qEl.value);qIdx=qItems.length?0:-1;renderQ()});
 qEl.addEventListener("keydown",e=>{if(e.key==="ArrowDown"){qIdx=Math.min(qItems.length-1,qIdx+1);renderQ();e.preventDefault()}
   else if(e.key==="ArrowUp"){qIdx=Math.max(0,qIdx-1);renderQ();e.preventDefault()}
-  else if(e.key==="Enter"&&qItems[qIdx]){choosePlace(qItems[qIdx]);e.preventDefault()}
+  else if(e.key==="Enter"&&qItems[qIdx]){pick(qItems[qIdx]);e.preventDefault()}
   else if(e.key==="Escape"){qres.hidden=true}});
-qEl.addEventListener("blur",()=>setTimeout(()=>{qres.hidden=true;qEl.setAttribute("aria-expanded","false")},150));
+qEl.addEventListener("blur",()=>setTimeout(()=>{qres.hidden=true;qEl.setAttribute("aria-expanded","false");if(qHome){qHome=false;qEl.value="";qEl.placeholder=t().search}},150));
+function renderHomeBtn(){const b=document.getElementById("home");b.textContent="📍 "+homeName();b.title=t().homeTitle;b.setAttribute("aria-label",t().homeTitle+": "+homeName())}
+document.getElementById("home").onclick=()=>{qHome=true;qEl.value="";qEl.placeholder=t().homeQ;qItems=[];renderQ();qEl.focus()};
+function countryAt(lon,lat){const f=FEATS&&FEATS.find(f=>d3.geoContains(f,[lon,lat]));return f?PLACES.find(p=>p.kind==="country"&&p.atlasId===f.id):null}
+function setHome(p){
+  const c=p.kind==="country"?p:countryAt(p.lon,p.lat);
+  HOME={name:p.name,ar:p.ar||p.name,lat:p.lat,lon:p.lon,atlasId:c?c.atlasId:null,cname:c?c.name:p.name,car:c?(c.ar||c.name):(p.ar||p.name)};
+  try{localStorage.setItem("wgo-home",JSON.stringify(HOME))}catch(e){}
+  qHome=false;qEl.value="";qEl.placeholder=t().search;qres.hidden=true;qEl.blur();
+  KW[0]=HOME.lon;KW[1]=HOME.lat;proj.rotate([-KW[0],-KW[1]]);rebase();
+  state.group=null;state.sel=null;gRoute.selectAll("*").remove();
+  drawBase();applyLang();renderAll();TR=d3.zoomIdentity;svg.call(zoom.transform,d3.zoomIdentity);updBack()}
+function useGps(){navigator.geolocation.getCurrentPosition(pos=>{const lat=pos.coords.latitude,lon=pos.coords.longitude;
+    let best=null,bd=60;for(const p of PLACES)if(p.kind!=="country"){const d=hav(lat,lon,p.lat,p.lon);if(d<bd){bd=d;best=p}}
+    const c=countryAt(lon,lat);setHome({...(best||c||{name:t().myPlace,ar:t().myPlace}),kind:best?best.kind:c?"country":"place",lat,lon})},
+  ()=>{qEl.value="";qEl.placeholder=t().gpsFail},{enableHighAccuracy:false,timeout:10000,maximumAge:600000})}
 qEl.addEventListener("search",()=>{if(!qEl.value&&state.group&&state.group.focus)clearGroup()});
 const titleHas=(s,p)=>{const x=normQ(s.title);return [p.ar,p.name].some(n=>n&&normQ(n).length>2&&x.includes(normQ(n)))};
 function choosePlace(p){
@@ -689,7 +721,7 @@ async function load(){
     const res=await fetch(`/api/stories?lang=${lang}`,{cache:"no-store"});if(!res.ok)throw new Error(res.status);
     const data=await res.json();
     const fresh=new Set();for(const s of data.stories){if(!state.firstLoad&&!state.seen.has(s.id))fresh.add(s.id);state.seen.add(s.id)}
-    state.stories=data.stories.map(s=>({...s,_new:fresh.has(s.id)}));
+    state.stories=data.stories.map(s=>({...s,_new:fresh.has(s.id)}));rebase();
     if(state.group&&state.group.focus){const F=state.group.focus,r=F.kind==="kuwait"?15:150;for(const s of state.stories)if((F.feat?d3.geoContains(F.feat,[s.place.lon,s.place.lat]):hav(F.lat,F.lon,s.place.lat,s.place.lon)<=r)||titleHas(s,F))state.group.ids.add(s.id)}state.sources=data.sources;state.updated=data.updated;state.error=false;
   }catch(e){state.error=!state.stories.length;}
   state.firstLoad=false;renderAll();
