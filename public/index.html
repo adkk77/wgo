@@ -105,7 +105,7 @@ svg#map:active{cursor:grabbing}
 .strikebar button[aria-pressed="true"]{background:var(--war);color:#fff}
 .sarc{fill:none;stroke:var(--war);stroke-width:1.4;opacity:.55;pointer-events:none}
 .scomet{fill:none;stroke:var(--war);stroke-width:3;stroke-linecap:round;stroke-dasharray:10 90;animation:comet 2.2s linear infinite;pointer-events:none}
-.shit{fill:none;stroke:transparent;stroke-width:14;cursor:pointer}
+.shit{fill:none;stroke:transparent;stroke-width:16;cursor:pointer}.stap{fill:transparent;cursor:pointer}.sk.faded{opacity:.15}
 .sorigin{fill:var(--sea);stroke:var(--war);stroke-width:1.5}
 .simpact{fill:var(--war)}
 .sring{fill:none;stroke:var(--war);stroke-width:2;transform-box:fill-box;transform-origin:center;animation:impact 1.8s ease-out infinite}
@@ -457,6 +457,7 @@ function drawLabels(){drawPlaceLabels();
     .attr("x",d=>cx+cr*Math.sin(d[1]*rad)).attr("y",d=>cy-cr*Math.cos(d[1]*rad)).text(d=>d[0]).style("font-size",d=>d[1]%90?"10px":"13px");
 }
 function clusters(){
+  if(state.strikes)return []; // on the strike map the arcs are the markers
   const out=[];const pts=visible().map(s=>{const p=TR.apply(proj([s.place.lon,s.place.lat]));return {s,x:p[0],y:p[1]}}).sort((a,b)=>a.s.km-b.s.km);
   for(const p of pts){const c=out.find(c=>Math.hypot(c.x-p.x,c.y-p.y)<22);if(c)c.items.push(p.s);else out.push({x:p.x,y:p.y,items:[p.s]})}
   return out;
@@ -604,19 +605,29 @@ function drawStrikes(){
   const data=state.strikes?visible():[];
   const g=L.selectAll("g.sk").data(data,s=>s.id).join(e=>{const g=e.append("g").attr("class","sk");
     g.append("path").attr("class","sarc");g.append("path").attr("class","scomet").attr("pathLength",100);g.append("path").attr("class","shit");
-    g.append("circle").attr("class","sorigin").attr("r",3.5);g.append("circle").attr("class","sring").attr("r",7);g.append("circle").attr("class","simpact").attr("r",3.5);return g});
+    g.append("circle").attr("class","sorigin").attr("r",3.5);g.append("circle").attr("class","sring").attr("r",7);g.append("circle").attr("class","simpact").attr("r",3.5);g.append("circle").attr("class","stap").attr("r",16);g.append("circle").attr("class","stap o").attr("r",12);return g});
   g.each(function(s,i){const a=TR.apply(proj([s.strike.from.lon,s.strike.from.lat])),b=TR.apply(proj([s.strike.to.lon,s.strike.to.lat]));
     const dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy)||1,bend=Math.min(.35*len,140);
     const c=[(a[0]+b[0])/2-dy/len*bend,(a[1]+b[1])/2+dx/len*bend];const d=`M${a[0]},${a[1]}Q${c[0]},${c[1]} ${b[0]},${b[1]}`;
     const el=d3.select(this);el.selectAll("path").attr("d",d);el.select(".scomet").style("animation-delay",`${-(i*0.37)%2.2}s`);
-    el.select(".sorigin").attr("cx",a[0]).attr("cy",a[1]);el.selectAll(".sring,.simpact").attr("cx",b[0]).attr("cy",b[1])});
-  g.select(".shit").on("click",(e,s)=>select(s.id,false));
+    el.select(".sorigin").attr("cx",a[0]).attr("cy",a[1]);el.selectAll(".sring,.simpact,.stap:not(.o)").attr("cx",b[0]).attr("cy",b[1]);el.select(".stap.o").attr("cx",a[0]).attr("cy",a[1])});
+  g.classed("faded",s=>!!state.group&&!state.group.ids.has(s.id));
+  g.selectAll(".shit,.stap").on("click",function(e){strikeFocus(d3.select(this.parentNode).datum())});
   // name each launch site once
   const seen=new Map();for(const s of data){const k=s.strike.from.name;if(!seen.has(k))seen.set(k,s.strike.from)}
   L.selectAll("text.slabel").data([...seen.values()],d=>d.name).join("text").attr("class","slabel")
     .each(function(d){const [x,y]=TR.apply(proj([d.lon,d.lat]));d3.select(this).attr("x",x).attr("y",y-9).text(lang==="ar"?d.ar:d.name)});
   L.raise();gMarks.selectAll("g.marker").raise();
 }
+// Tapping a strike: zoom to it and list the strikes on the same target (or between the same two places)
+function strikeFocus(s){hideTip();
+  const T=s.strike.to,O=s.strike.from;
+  const ids=new Set(visible().filter(x=>x.strike.to.name===T.name||(x.strike.from.name===O.name&&x.strike.to.name===T.name)).map(x=>x.id));
+  state.group={ids,place:lang==="ar"?T.ar:T.name,exact:true};state.sel=null;gRoute.selectAll("*").remove();
+  renderDetail();renderList();drawMarkers();drawStrikes();listEl.scrollTop=0;updBack();
+  const a=proj([O.lon,O.lat]),b=proj([T.lon,T.lat]);const top=isPhone()?96:50,bot=60,ah=H-top-bot;
+  const k=Math.max(1,Math.min(60,0.8*Math.min((W-100)/(Math.abs(a[0]-b[0])+1),ah/(Math.abs(a[1]-b[1])+1))));
+  zoomTo((a[0]+b[0])/2,(a[1]+b[1])/2-(top+ah/2-H/2)/k,k)}
 function renderStrikeUI(){const b=document.getElementById("zstrike");b.textContent=t().strikes;b.setAttribute("aria-pressed",String(state.strikes));
   const bar=document.getElementById("strikebar");bar.hidden=!state.strikes;if(!state.strikes)return;
   document.getElementById("strikeN").textContent=t().strikeN(nf().format(visible().length));
