@@ -193,6 +193,8 @@ html,body{touch-action:pan-x pan-y}
   .status{order:4;flex-basis:100%;margin-inline-start:0;font-size:11px}
   .status span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
   .foot{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-block:6px;font-size:11px}
+  .foot{cursor:pointer}.foot.open{white-space:normal;max-height:40vh;overflow:auto}
+  .foot::before{content:"▾ "}.foot.open::before{content:"▴ "}
   header{padding-block:6px}
 }
 @media (min-width:821px){.drop{display:flex;flex-direction:column;min-height:0;flex:1}}
@@ -247,7 +249,7 @@ html,body{touch-action:pan-x pan-y}
         <div class="seg" id="sort"><button type="button" data-v="new" data-t="newest"></button><button type="button" data-v="near" data-t="nearest"></button></div></div>
     </div>
     <div class="list" id="list"></div>
-    <div class="foot" id="foot"></div>
+    <div class="foot" id="foot" role="button" tabindex="0" onclick="this.classList.toggle('open')"></div>
     </div>
   </aside>
 </div>
