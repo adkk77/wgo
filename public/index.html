@@ -56,7 +56,8 @@ header{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px 1
 .qres .o{font-size:12px;color:var(--ink-2)}
 .qres .none{color:var(--ink-3);cursor:default}
 .plabel{font-family:var(--f-body);fill:var(--ink-2);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--sea);stroke-width:3px;stroke-linejoin:round;pointer-events:none}
-.plabel.country{font-size:11px;font-weight:600;fill:var(--ink-2);letter-spacing:.02em}
+.plabel.country{font-size:11px;font-weight:600;fill:var(--ink-2)}
+:lang(en) .plabel.country{letter-spacing:.02em}
 .plabel.city{font-size:10px;fill:var(--ink)}
 .plabel.focus{font-size:13px;font-weight:700;fill:var(--ink)}
 .cdot{fill:var(--ink-2);pointer-events:none}
@@ -393,7 +394,7 @@ function drawBase(){
   restyle();
 }
 function restyle(){
-  gBase.selectAll(".land").style("stroke-width",.5/TR.k);gRings.selectAll(".spoke").style("stroke-width",.6/TR.k);gBase.select(".sphere").style("stroke-width",1/TR.k);
+  gBase.selectAll(".land,.kw").style("stroke-width",function(){return (this.classList.contains("focus")?1.5:this.classList.contains("kw")?0:.5)/TR.k});gBase.select(".grat").style("stroke-width",.4/TR.k);gRings.selectAll(".spoke").style("stroke-width",.6/TR.k);gBase.select(".sphere").style("stroke-width",1/TR.k);
   ringSel&&ringSel.classed("hot",km=>km===state.range).style("stroke-width",km=>(km===state.range?1.6:.8)/TR.k).style("stroke-dasharray",km=>km===state.range?null:`${3/TR.k} ${4/TR.k}`);
   gRoute.selectAll(".route").style("stroke-width",1.6/TR.k).style("stroke-dasharray",`${5/TR.k} ${4/TR.k}`);
 }
@@ -413,7 +414,7 @@ function drawPlaceLabels(){
   const minK={place:3.5,kuwait:22};
   for(const p of PLACES){if(p.kind==="country"||!shown(p)||k<minK[p.kind]||(F&&F.name===p.name))continue;const [x,y]=TR.apply(proj([p.lon,p.lat]));const txt=nameOf(p);const w=txt.length*6+6;
     if(fits(x,y-9,w,12))out.push({x,y:y-9,txt,cls:"city",dot:[x,y]})}
-  L.selectAll("text").data(out).join("text").attr("class",d=>"plabel "+d.cls).attr("x",d=>d.x).attr("y",d=>d.y).text(d=>d.txt);
+  L.selectAll("text").data(out).join("text").attr("class",d=>"plabel "+d.cls).attr("direction",d=>/[\u0600-\u06FF]/.test(d.txt)?"rtl":"ltr").attr("x",d=>d.x).attr("y",d=>d.y).text(d=>d.txt);
   L.selectAll("circle").data(out.filter(d=>d.dot)).join("circle").attr("class","cdot").attr("r",1.8).attr("cx",d=>d.dot[0]).attr("cy",d=>d.dot[1]);
 }
 function drawLabels(){drawPlaceLabels();
@@ -465,12 +466,17 @@ function clickCluster(c){hideTip();
   state.group={ids:new Set(c.items.map(s=>s.id)),place:top,exact:Object.keys(counts).length===1};applyFocus();qEl.value="";
   state.sel=null;gRoute.selectAll("*").remove();renderDetail();renderList();drawMarkers();listEl.scrollTop=0;
   if(!isPhone())listEl.scrollIntoView({block:"nearest"});
+  // zoom in on the circle so its stories spread out on the map
+  const pts=c.items.map(s=>proj([s.place.lon,s.place.lat]));
+  const [x0,x1]=d3.extent(pts,p=>p[0]),[y0,y1]=d3.extent(pts,p=>p[1]);
+  const span=Math.max((x1-x0)/W,(y1-y0)/H);
+  zoomTo((x0+x1)/2,(y0+y1)/2,Math.min(120,Math.max(TR.k*2.5,span?0.5/span:120)));
 }
 function clearGroup(){const hadFocus=state.group&&state.group.focus;state.group=null;document.getElementById("q").value="";applyFocus();renderList();drawMarkers();drawLabels();listEl.scrollTop=0;if(hadFocus)zoomWorld()}
 function applyFocus(){
   const F=state.group&&state.group.focus;
   if(landSel)landSel.classed("dim",d=>!!F&&!(F.feat?d===F.feat:false)).classed("focus",d=>!!F&&F.feat===d);
-  gRings.selectAll(".ring,.spoke").classed("faded",!!F);
+  gRings.selectAll(".ring,.spoke").classed("faded",!!F);restyle();
 }
 /* ---------- search ---------- */
 function hav(a,b,c,d){const p1=a*rad,p2=c*rad,dp=(c-a)*rad,dl=(d-b)*rad;const x=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(x)))}
