@@ -11,6 +11,13 @@ const PORT = +(process.env.PORT || 3000);
 const REFRESH_MIN = +(process.env.REFRESH_MINUTES || 5);
 const feeds = JSON.parse(readFileSync(process.env.FEEDS_FILE || join(ROOT, 'feeds.json'), 'utf8'));
 const news = createNews(feeds);
+// slim gazetteer for the page's search box and map labels
+const PLACES = JSON.stringify(JSON.parse(readFileSync(join(ROOT, 'data', 'places.json'), 'utf8'))
+  .map(({ name, ar, lat, lon, kind, atlasId, aliases = [], aliasesAr = [] }) => ({
+    name: name.replace(/, Kuwait$/, ''), ar: ar || name, lat, lon, kind, atlasId,
+    // districts and landmarks inside a city are searchable; country aliases are people and adjectives, so skip them
+    alt: kind === 'country' ? [] : [...aliases, ...aliasesAr].filter((a) => a !== name.replace(/, Kuwait$/, '') && a !== ar),
+  })));
 
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon' };
 
@@ -27,6 +34,9 @@ const server = http.createServer(async (req, res) => {
     const lang = url.searchParams.get('lang') || 'all';
     const body = JSON.stringify({ ...news.snapshot(lang), refreshMinutes: REFRESH_MIN });
     return send(res, 200, body, undefined, { 'cache-control': 'no-store', 'access-control-allow-origin': '*' });
+  }
+  if (url.pathname === '/places.json') {
+    return send(res, 200, PLACES, undefined, { 'cache-control': 'public, max-age=3600' });
   }
   if (url.pathname === '/healthz') {
     return send(res, news.state.updated ? 200 : 503, JSON.stringify({ updated: news.state.updated, stories: news.state.stories.size }));

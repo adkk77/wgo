@@ -37,6 +37,25 @@ header{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px 1
 .brand{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:800;font-size:26px;letter-spacing:-.02em;line-height:1;direction:ltr}
 .brand b{color:var(--kw)}
 .tag{color:var(--ink-2);font-size:13px}
+.search{position:relative;flex:1 1 200px;max-width:300px;min-width:0}
+.search input{width:100%;border:1px solid var(--rule);background:var(--chip);color:var(--ink);border-radius:999px;padding:6px 14px;font:500 13px var(--f-body);outline:none}
+.search input:focus{border-color:var(--kw)}
+.search input::placeholder{color:var(--ink-3)}
+.qres{position:absolute;top:calc(100% + 4px);inset-inline:0;z-index:30;list-style:none;margin:0;padding:4px;background:var(--panel);border:1px solid var(--rule);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.25);max-height:320px;overflow-y:auto}
+.qres li{display:flex;align-items:baseline;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer}
+.qres li[aria-selected="true"],.qres li:hover{background:var(--chip)}
+.qres .k{margin-inline-start:auto;font-size:11px;color:var(--ink-3)}
+.qres .o{font-size:12px;color:var(--ink-2)}
+.qres .none{color:var(--ink-3);cursor:default}
+.plabel{font-family:var(--f-body);fill:var(--ink-2);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--sea);stroke-width:3px;stroke-linejoin:round;pointer-events:none}
+.plabel.country{font-size:11px;font-weight:600;fill:var(--ink-2);letter-spacing:.02em}
+.plabel.city{font-size:10px;fill:var(--ink)}
+.plabel.focus{font-size:13px;font-weight:700;fill:var(--ink)}
+.cdot{fill:var(--ink-2);pointer-events:none}
+.land.dim,.kw.dim{opacity:.25}
+.land.focus,.kw.focus{stroke:var(--kw);stroke-width:1.5}
+.marker.faded{opacity:.18}
+.ring.faded,.spoke.faded{opacity:.15}
 .status{margin-inline-start:auto;font-size:12px;color:var(--ink-2);display:flex;align-items:center;gap:8px}
 .status i{width:8px;height:8px;border-radius:50%;background:var(--ink-3);display:inline-block}
 .status.live i{background:var(--live);box-shadow:0 0 0 0 var(--live)}
@@ -154,6 +173,7 @@ aside{min-width:0;min-height:0;display:flex;flex-direction:column;border-inline-
   .mapctl button{min-width:30px;height:30px;font-size:15px;border-radius:7px}
   .mapctl button.txt{padding:0 6px;font-size:10.5px}
   .mf select{font-size:12px;padding-block:5px}
+  .search{flex-basis:100%;max-width:none;order:5}
   .foot{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-block:6px;font-size:11px}
   header{padding-block:6px}
 }
@@ -166,6 +186,10 @@ aside{min-width:0;min-height:0;display:flex;flex-direction:column;border-inline-
   <header>
     <div class="brand">WG<b>O</b></div>
     <div class="tag" data-t="tag"></div>
+    <div class="search" role="search">
+      <input id="q" type="search" autocomplete="off" spellcheck="false" aria-autocomplete="list" aria-controls="qres" aria-expanded="false">
+      <ul class="qres" id="qres" role="listbox" hidden></ul>
+    </div>
     <div class="status" id="status" aria-live="polite"><i></i><span></span></div>
     <button class="lang" id="lang" type="button"></button>
   </header>
@@ -223,7 +247,7 @@ const T={
       offline:"تعذّر الاتصال بالخادم. سنحاول مجدداً بعد دقيقتين.",waiting:"الخادم يجمع الأخبار الآن. ستظهر خلال دقيقة.",
       none:"لا توجد أخبار بهذه الشروط. وسّع المسافة أو فعّل تصنيفات أكثر.",sources:"المصادر: ",failed:"(تعذّر الوصول)",
       switchTo:"English",nearby:n=>`${n} أخبار هنا`,new:"جديد",mapLabel:"خريطة العالم ومركزها الكويت، والأخبار موزعة حسب المسافة والاتجاه",
-      zin:"تكبير",zout:"تصغير",newsList:"الأخبار",group:(n,p,ex)=>`أخبار ${p}${ex?"":" وما حولها"} (${n}) · من الأحدث`,showAll:"✕ كل الأخبار",close:"إغلاق",collapse:"تصغير اللوحة",expand:"توسيع اللوحة",readBtn:s=>`اقرأ الخبر كاملاً في ${s}`},
+      zin:"تكبير",zout:"تصغير",newsList:"الأخبار",search:"ابحث عن دولة أو مدينة",kCountry:"دولة",kCity:"مدينة",kArea:"منطقة في الكويت",noPlace:"لا توجد نتائج",nonePlace:p=>`لا توجد أخبار عن ${p} في الوقت الحالي. ستظهر هنا فور نشرها.`,group:(n,p,ex)=>`أخبار ${p}${ex?"":" وما حولها"} (${n}) · من الأحدث`,showAll:"✕ كل الأخبار",close:"إغلاق",collapse:"تصغير اللوحة",expand:"توسيع اللوحة",readBtn:s=>`اقرأ الخبر كاملاً في ${s}`},
   en:{tag:"What’s going on around you",legend:"Rings show distance from Kuwait City. Up is north. Every story sits at its true distance and bearing.",
       gulf:"Gulf",world:"World",within:"Within",sortBy:"Sort by",newest:"Newest",nearest:"Nearest",all:"All",
       cats:{financial:"Financial",political:"Political",war:"War",crisis:"Crises",crime:"Crime"},
@@ -232,7 +256,7 @@ const T={
       offline:"Can't reach the server. Trying again in two minutes.",waiting:"The server is collecting stories now. They'll appear within a minute.",
       none:"No stories match. Widen the distance or turn on more categories.",sources:"Sources: ",failed:"(unreachable)",
       switchTo:"العربية",nearby:n=>`${n} stories here`,new:"New",mapLabel:"Map of the world centred on Kuwait, with stories placed by distance and direction",
-      zin:"Zoom in",zout:"Zoom out",newsList:"News",group:(n,p,ex)=>`${n} stories ${ex?"in":"in and around"} ${p} · newest first`,showAll:"✕ All news",close:"Close",collapse:"Collapse panel",expand:"Expand panel",readBtn:s=>`Read the full story at ${s} ↗`}
+      zin:"Zoom in",zout:"Zoom out",newsList:"News",search:"Search a country or city",kCountry:"Country",kCity:"City",kArea:"Area in Kuwait",noPlace:"No matches",nonePlace:p=>`No stories about ${p} right now. They'll appear here as soon as they're published.`,group:(n,p,ex)=>`${n} stories ${ex?"in":"in and around"} ${p} · newest first`,showAll:"✕ All news",close:"Close",collapse:"Collapse panel",expand:"Expand panel",readBtn:s=>`Read the full story at ${s} ↗`}
 };
 const CATV={financial:"--fin",political:"--pol",war:"--war",crisis:"--cri",crime:"--crm"};
 let lang="ar";try{const q=new URLSearchParams(location.search).get("lang");lang=q==="en"||q==="ar"?q:(localStorage.getItem("wgo-lang")||"ar")}catch(e){}
@@ -256,10 +280,11 @@ function applyLang(){
   document.getElementById("lang").textContent=t().switchTo;
   document.getElementById("zin").setAttribute("aria-label",t().zin);document.getElementById("zout").setAttribute("aria-label",t().zout);
   document.getElementById("map").setAttribute("aria-label",t().mapLabel);
+  const q=document.getElementById("q");q.placeholder=t().search;q.setAttribute("aria-label",t().search);
   document.title=lang==="ar"?"WGO · ماذا يحدث حولك":"WGO · What’s going on around you";
 }
 document.getElementById("lang").onclick=()=>{lang=lang==="ar"?"en":"ar";try{localStorage.setItem("wgo-lang",lang)}catch(e){}
-  state.sel=null;state.group=null;state.stories=[];state.firstLoad=true;applyLang();renderAll();load()};
+  state.sel=null;state.group=null;qEl.value="";applyFocus();state.stories=[];state.firstLoad=true;applyLang();renderAll();load()};
 
 /* ---------- controls ---------- */
 const catsEl=document.getElementById("cats");
@@ -296,7 +321,7 @@ function renderList(){
     bar.append(tx,b);listEl.append(bar);
     v=v.slice().sort((a,b)=>b.published.localeCompare(a.published));
   } else v=v.slice().sort(state.sort==="near"?(a,b)=>a.km-b.km||b.published.localeCompare(a.published):(a,b)=>b.published.localeCompare(a.published)||a.km-b.km);
-  if(!v.length){const d=document.createElement("div");d.className="empty";d.textContent=t().none;listEl.append(d);return}
+  if(!v.length){const d=document.createElement("div");d.className="empty";d.textContent=state.group?t().nonePlace(state.group.place):t().none;listEl.append(d);return}
   const frag=document.createDocumentFragment();
   for(const s of v.slice(0,250)){
     const el=document.createElement("div");el.className="story"+(state.sel===s.id?" sel":"");el.tabIndex=0;el.dataset.id=s.id;
@@ -331,7 +356,9 @@ const proj=d3.geoAzimuthalEquidistant().rotate([-KW[0],-KW[1]]).clipAngle(179.9)
 const path=d3.geoPath(proj);
 const root=svg.append("g"),gBase=root.append("g"),gRings=root.append("g"),gRoute=root.append("g"),gMarks=svg.append("g");
 const RINGS=[500,1000,2000,3000,5000,7500,10000,15000];const R=6371.0088,rad=Math.PI/180;
-let W=0,H=0,TR=d3.zoomIdentity,ringSel,WORLD=null;
+let W=0,H=0,TR=d3.zoomIdentity,ringSel,WORLD=null,FEATS=null,landSel=null,PLACES=[];
+function largest(f){const g=f.geometry;if(!g||g.type!=="MultiPolygon")return f;let best=null,ba=-1;
+  for(const c of g.coordinates){const a=d3.geoArea({type:"Polygon",coordinates:c});if(a>ba){ba=a;best=c}}return {type:"Feature",geometry:{type:"Polygon",coordinates:best}}}
 const kmPx=km=>proj.scale()*km/R;
 function destination(b,deg){const φ1=KW[1]*rad,λ1=KW[0]*rad,δ=deg*rad,θ=b*rad;
   const φ2=Math.asin(Math.sin(φ1)*Math.cos(δ)+Math.cos(φ1)*Math.sin(δ)*Math.cos(θ));
@@ -342,7 +369,10 @@ function drawBase(){
   gBase.selectAll("*").remove();gRings.selectAll("*").remove();
   gBase.append("path").datum({type:"Sphere"}).attr("class","sphere").attr("d",path);
   gBase.append("path").datum(d3.geoGraticule10()).attr("class","grat").attr("d",path);
-  if(WORLD)gBase.append("g").selectAll("path").data(topojson.feature(WORLD,WORLD.objects.countries).features).join("path").attr("class",d=>d.id==="414"?"kw":"land").attr("d",path);
+  if(WORLD){FEATS=FEATS||topojson.feature(WORLD,WORLD.objects.countries).features;
+    landSel=gBase.append("g").selectAll("path").data(FEATS).join("path").attr("class",d=>d.id==="414"?"kw":"land").attr("d",path);
+    for(const f of FEATS){f._b=path.bounds(f);f._c=path.centroid(largest(f))}
+    applyFocus();}
   for(let i=0;i<8;i++)gRings.append("path").datum({type:"LineString",coordinates:[KW,destination(i*45,170)]}).attr("class","spoke").attr("d",path);
   ringSel=gRings.selectAll("path.ring").data(RINGS).join("path").attr("class","ring").attr("d",km=>path(d3.geoCircle().center(KW).radius(km/R/rad).precision(1)()));
   restyle();
@@ -352,7 +382,26 @@ function restyle(){
   ringSel&&ringSel.classed("hot",km=>km===state.range).style("stroke-width",km=>(km===state.range?1.6:.8)/TR.k).style("stroke-dasharray",km=>km===state.range?null:`${3/TR.k} ${4/TR.k}`);
   gRoute.selectAll(".route").style("stroke-width",1.6/TR.k).style("stroke-dasharray",`${5/TR.k} ${4/TR.k}`);
 }
-function drawLabels(){
+function drawPlaceLabels(){
+  const L=gMarks.selectAll("g.plabels").data([0]).join("g").attr("class","plabels");
+  const boxes=[],out=[],k=TR.k;
+  const fits=(x,y,w,h)=>{if(x-w/2<2||x+w/2>W-2||y-h/2<2||y+h/2>H-2)return false;for(const b of boxes)if(Math.abs(b.x-x)<(b.w+w)/2+4&&Math.abs(b.y-y)<(b.h+h)/2+2)return false;boxes.push({x,y,w,h});return true};
+  const nameOf=p=>lang==="ar"?p.ar:p.name;
+  const shown=p=>lang!=="ar"||!/[A-Za-z]/.test(p.ar);
+  const byAtlas=new Map(PLACES.filter(p=>p.atlasId).map(p=>[p.atlasId,p]));
+  const F=state.group&&state.group.focus;
+  // the chosen place first, then countries by on-screen size, then cities when zoomed in
+  if(F){const [x,y]=TR.apply(F.kind==="country"&&F.feat?F.feat._c:proj([F.lon,F.lat]));const txt=nameOf(F);const w=txt.length*7.5+8;if(fits(x,y-(F.kind==="country"?0:12),w,16))out.push({x,y:y-(F.kind==="country"?0:12),txt,cls:"focus"})}
+  if(FEATS){const cs=[];for(const f of FEATS){const p=byAtlas.get(f.id);if(!p||(F&&F.atlasId===f.id))continue;const bw=(f._b[1][0]-f._b[0][0])*k;if(bw<28)continue;cs.push({f,p,bw})}
+    cs.sort((a,b)=>b.bw-a.bw);
+    for(const c of cs){const [x,y]=TR.apply(c.f._c);const txt=nameOf(c.p);const w=txt.length*(lang==="ar"?6:6.6)+6;if(w>c.bw*1.6)continue;if(fits(x,y,w,13))out.push({x,y,txt,cls:"country"})}}
+  const minK={place:3.5,kuwait:22};
+  for(const p of PLACES){if(p.kind==="country"||!shown(p)||k<minK[p.kind]||(F&&F.name===p.name))continue;const [x,y]=TR.apply(proj([p.lon,p.lat]));const txt=nameOf(p);const w=txt.length*6+6;
+    if(fits(x,y-9,w,12))out.push({x,y:y-9,txt,cls:"city",dot:[x,y]})}
+  L.selectAll("text").data(out).join("text").attr("class",d=>"plabel "+d.cls).attr("x",d=>d.x).attr("y",d=>d.y).text(d=>d.txt);
+  L.selectAll("circle").data(out.filter(d=>d.dot)).join("circle").attr("class","cdot").attr("r",1.8).attr("cx",d=>d.dot[0]).attr("cy",d=>d.dot[1]);
+}
+function drawLabels(){drawPlaceLabels();
   const [cx,cy]=TR.apply(proj(KW));
   const L=gMarks.selectAll("g.lab").data([0]).join("g").attr("class","lab");
   const shown=[];for(const km of RINGS){const r=kmPx(km)*TR.k;if(r>26&&r<Math.hypot(W,H)&&(!shown.length||r-shown[shown.length-1].r>34))shown.push({km,r})}
@@ -370,7 +419,7 @@ function clusters(){
 const arc=d3.arc();
 function drawMarkers(){
   const g=gMarks.selectAll("g.marker").data(clusters(),c=>c.items.map(s=>s.id).join(",")).join(e=>e.append("g").attr("class","marker").attr("tabindex",0).attr("role","button"));
-  g.attr("transform",c=>`translate(${c.x},${c.y})`).classed("sel",c=>c.items.some(s=>s.id===state.sel)||(!!state.group&&c.items.length>1&&c.items.every(s=>state.group.ids.has(s.id)))).classed("fresh",c=>c.items.some(s=>s._new))
+  g.attr("transform",c=>`translate(${c.x},${c.y})`).classed("sel",c=>c.items.some(s=>s.id===state.sel)||(!!state.group&&c.items.length>1&&c.items.every(s=>state.group.ids.has(s.id)))).classed("fresh",c=>c.items.some(s=>s._new)).classed("faded",c=>!!state.group&&!!state.group.focus&&!c.items.some(s=>state.group.ids.has(s.id)))
    .attr("aria-label",c=>c.items.length===1?`${t().cats[c.items[0].category]}: ${c.items[0].title}`:`${t().nearby(c.items.length)} · ${placeName(c.items[0])}`);
   g.each(function(c){const el=d3.select(this);el.selectAll("*").remove();
     const n=c.items.length,r=n===1?6:Math.min(9+Math.sqrt(n)*3,22);
@@ -384,7 +433,7 @@ function drawMarkers(){
   const [cx,cy]=TR.apply(proj(KW));
   gMarks.selectAll("g.centre").data([0]).join(e=>{const g=e.append("g").attr("class","centre");g.append("circle").attr("class","pulse").attr("r",6);g.append("circle").attr("r",3.5);return g})
     .attr("transform",`translate(${cx},${cy})`).lower();
-  gMarks.select("g.lab").lower();
+  gMarks.select("g.plabels").lower();gMarks.select("g.lab").lower();
 }
 const tip=document.getElementById("tip");
 function showTip(c){const s=c.items[0];tip.hidden=false;tip.innerHTML="";
@@ -398,11 +447,51 @@ function clickCluster(c){hideTip();
   if(c.items.length===1)return select(c.items[0].id,false);
   const counts={};for(const s of c.items){const k=placeName(s);counts[k]=(counts[k]||0)+1}
   const top=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
-  state.group={ids:new Set(c.items.map(s=>s.id)),place:top,exact:Object.keys(counts).length===1};
+  state.group={ids:new Set(c.items.map(s=>s.id)),place:top,exact:Object.keys(counts).length===1};applyFocus();qEl.value="";
   state.sel=null;gRoute.selectAll("*").remove();renderDetail();renderList();drawMarkers();listEl.scrollTop=0;
   if(!isPhone())listEl.scrollIntoView({block:"nearest"});
 }
-function clearGroup(){state.group=null;renderList();drawMarkers();listEl.scrollTop=0}
+function clearGroup(){const hadFocus=state.group&&state.group.focus;state.group=null;document.getElementById("q").value="";applyFocus();renderList();drawMarkers();drawLabels();listEl.scrollTop=0;if(hadFocus)zoomWorld()}
+function applyFocus(){
+  const F=state.group&&state.group.focus;
+  if(landSel)landSel.classed("dim",d=>!!F&&!(F.feat?d===F.feat:false)).classed("focus",d=>!!F&&F.feat===d);
+  gRings.selectAll(".ring,.spoke").classed("faded",!!F);
+}
+/* ---------- search ---------- */
+function hav(a,b,c,d){const p1=a*rad,p2=c*rad,dp=(c-a)*rad,dl=(d-b)*rad;const x=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(x)))}
+function normQ(s){return (s||"").toLowerCase().replace(/[\u064B-\u0652\u0640]/g,"").replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه").replace(/^ال/,"").trim()}
+function searchPlaces(q){q=normQ(q);if(!q)return [];
+  const sc=[];for(const p of PLACES){let best=-1,via=null;
+    for(const [n,isAlt] of [[p.ar,0],[p.name,0],...(p.alt||[]).map(a=>[a,1])]){const v=normQ(n);let s=v===q?0:v.startsWith(q)?1:v.includes(q)?2:-1;
+      if(s>=0){s=s*2+isAlt;if(best<0||s<best){best=s;via=isAlt?n:null}}}
+    if(best>=0)sc.push({p,via,s:best*10+(p.kind==="country"?0:p.kind==="place"?1:2)})}
+  return sc.sort((a,b)=>a.s-b.s).slice(0,8).map(x=>({...x.p,via:x.via}))}
+const qEl=document.getElementById("q"),qres=document.getElementById("qres");let qItems=[],qIdx=-1;
+function renderQ(){qres.innerHTML="";qres.hidden=!qEl.value.trim();qEl.setAttribute("aria-expanded",String(!qres.hidden));if(qres.hidden)return;
+  if(!qItems.length){const li=document.createElement("li");li.className="none";li.textContent=t().noPlace;qres.append(li);return}
+  qItems.forEach((p,i)=>{const li=document.createElement("li");li.setAttribute("role","option");li.setAttribute("aria-selected",String(i===qIdx));
+    const m=document.createElement("span");m.textContent=p.via||(lang==="ar"?p.ar:p.name);const o=document.createElement("span");o.className="o";o.textContent=p.via?(lang==="ar"?p.ar:p.name):(lang==="ar"?p.name:p.ar);
+    const k=document.createElement("span");k.className="k";k.textContent=p.kind==="country"?t().kCountry:p.kind==="kuwait"?t().kArea:t().kCity;
+    li.append(m,o,k);li.onmousedown=e=>{e.preventDefault();choosePlace(p)};qres.append(li)})}
+qEl.addEventListener("input",()=>{qItems=searchPlaces(qEl.value);qIdx=qItems.length?0:-1;renderQ()});
+qEl.addEventListener("keydown",e=>{if(e.key==="ArrowDown"){qIdx=Math.min(qItems.length-1,qIdx+1);renderQ();e.preventDefault()}
+  else if(e.key==="ArrowUp"){qIdx=Math.max(0,qIdx-1);renderQ();e.preventDefault()}
+  else if(e.key==="Enter"&&qItems[qIdx]){choosePlace(qItems[qIdx]);e.preventDefault()}
+  else if(e.key==="Escape"){qres.hidden=true}});
+qEl.addEventListener("blur",()=>setTimeout(()=>{qres.hidden=true;qEl.setAttribute("aria-expanded","false")},150));
+qEl.addEventListener("search",()=>{if(!qEl.value&&state.group&&state.group.focus)clearGroup()});
+const titleHas=(s,p)=>{const x=normQ(s.title);return [p.ar,p.name].some(n=>n&&normQ(n).length>2&&x.includes(normQ(n)))};
+function choosePlace(p){
+  qEl.value=p.via||(lang==="ar"?p.ar:p.name);qres.hidden=true;qEl.blur();
+  const feat=p.kind==="country"&&FEATS?FEATS.find(f=>f.id===p.atlasId):null;
+  const radius=p.kind==="kuwait"?15:p.kind==="place"?150:0;
+  // stories placed inside the country (or near the city), plus any that name it in the headline
+  const ids=new Set(state.stories.filter(s=>(feat?d3.geoContains(feat,[s.place.lon,s.place.lat]):hav(p.lat,p.lon,s.place.lat,s.place.lon)<=radius)||s.place.name===p.name||titleHas(s,p)).map(s=>s.id));
+  state.group={ids,place:p.via||(lang==="ar"?p.ar:p.name),exact:true,focus:{...p,feat}};
+  state.sel=null;gRoute.selectAll("*").remove();renderDetail();applyFocus();renderList();drawMarkers();drawLabels();listEl.scrollTop=0;
+  if(feat){const b=path.bounds(largest(feat));const [[x0,y0],[x1,y1]]=b;zoomTo((x0+x1)/2,(y0+y1)/2,Math.max(1,Math.min(60,0.7/Math.max((x1-x0)/W,(y1-y0)/H))))}
+  else{const c=proj([p.lon,p.lat]);zoomTo(c[0],c[1],Math.min(W,H)/2/kmPx(p.kind==="kuwait"?40:500))}
+}
 function select(id,fromList){
   state.sel=state.sel===id&&fromList?null:id;
   const s=state.stories.find(x=>x.id===id);gRoute.selectAll("*").remove();
@@ -477,12 +566,14 @@ async function load(){
     const res=await fetch(`/api/stories?lang=${lang}`,{cache:"no-store"});if(!res.ok)throw new Error(res.status);
     const data=await res.json();
     const fresh=new Set();for(const s of data.stories){if(!state.firstLoad&&!state.seen.has(s.id))fresh.add(s.id);state.seen.add(s.id)}
-    state.stories=data.stories.map(s=>({...s,_new:fresh.has(s.id)}));state.sources=data.sources;state.updated=data.updated;state.error=false;
+    state.stories=data.stories.map(s=>({...s,_new:fresh.has(s.id)}));
+    if(state.group&&state.group.focus){const F=state.group.focus,r=F.kind==="kuwait"?15:150;for(const s of state.stories)if((F.feat?d3.geoContains(F.feat,[s.place.lon,s.place.lat]):hav(F.lat,F.lon,s.place.lat,s.place.lon)<=r)||titleHas(s,F))state.group.ids.add(s.id)}state.sources=data.sources;state.updated=data.updated;state.error=false;
   }catch(e){state.error=!state.stories.length;}
   state.firstLoad=false;renderAll();
 }
 applyLang();layout();drawBase();svg.call(zoom.transform,TR);renderAll();load();
 setInterval(load,POLL_MS);setInterval(renderStatus,30000);
+fetch("places.json").then(r=>r.json()).then(p=>{PLACES=p;drawLabels()}).catch(()=>{});
 fetch("countries-50m.json").then(r=>r.json()).then(w=>{WORLD=w;drawBase()}).catch(()=>{});
 let rt;new ResizeObserver(()=>{clearTimeout(rt);rt=setTimeout(()=>{layout();drawBase();svg.call(zoom.transform,TR)},120)}).observe(stage);
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change",renderAll);
