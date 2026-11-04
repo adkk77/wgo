@@ -51,7 +51,24 @@
 html,body{height:100%;margin:0}
 body{background:var(--panel);color:var(--ink);font-family:var(--f-body);font-size:14px;overflow:hidden}
 :lang(en) body,body:lang(en){font-family:"IBM Plex Sans",system-ui,sans-serif}
-.app{height:100%;display:grid;grid-template-columns:minmax(0,1fr) 410px;grid-template-rows:auto minmax(0,1fr);
+/* map | drag bar | news panel — the panel stays on the right in both languages */
+.app{direction:ltr}.app>*{direction:ltr}[dir=rtl] .app>*{direction:rtl}
+.split{display:none}
+@media (min-width:821px){
+  .split{display:block;position:relative;cursor:col-resize;background:var(--rule);touch-action:none;z-index:5}
+  .split::before{content:"";position:absolute;inset:0 -6px}
+  .split::after{content:"";position:absolute;top:50%;left:50%;width:4px;height:44px;margin:-22px 0 0 -2px;border-radius:3px;background:var(--ink-3);opacity:.6}
+  .split:hover,.split.drag,.split:focus-visible{background:var(--kw);outline:none}
+  aside{border-inline-start:0!important}
+}
+aside{container-type:inline-size}
+@container (max-width:340px){
+  .story{padding-inline:8px 10px;gap:0 8px;padding-block:9px}
+  .story h3,:lang(en) .story h3{font-size:13px;line-height:1.4}
+  .meta{font-size:11px;gap:2px 8px;margin-top:4px}
+  .controls{padding:10px!important}
+}
+.app{height:100%;display:grid;grid-template-columns:minmax(0,1fr) 6px var(--railw,410px);grid-template-rows:auto minmax(0,1fr);
   padding-top:env(safe-area-inset-top,0px)}
 @media (display-mode:standalone){header{padding-top:calc(8px + env(safe-area-inset-top,0px))!important}}
 header{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;padding-block:10px;
@@ -276,6 +293,7 @@ html,body{touch-action:pan-x pan-y}
       <div class="db"><div class="dmeta"></div><div class="dsum" dir="auto"></div><div class="dplace"></div><a class="dread" target="_blank" rel="noopener"></a></div>
     </div>
   </div>
+  <div class="split" id="split" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Resize"></div>
   <aside id="aside">
     <button class="dropbtn" id="dropbtn" type="button" aria-expanded="false" aria-controls="drop"><span data-t="newsList"></span><span class="n" id="dropn"></span>
       <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -744,6 +762,19 @@ applyLang();layout();drawBase();svg.call(zoom.transform,TR);renderAll();load();
 setInterval(load,POLL_MS);setInterval(renderStatus,30000);
 fetch("places.json").then(r=>r.json()).then(p=>{PLACES=p;drawLabels()}).catch(()=>{});
 fetch("countries-50m.json").then(r=>r.json()).then(w=>{WORLD=w;drawBase()}).catch(()=>{});
+// drag the bar between map and news to resize; double-click resets. Remembered on this device.
+(function(){const sp=document.getElementById("split"),app=document.querySelector(".app");
+  const clamp=w=>Math.max(260,Math.min(innerWidth-320,w));
+  const set=w=>{app.style.setProperty("--railw",clamp(w)+"px")};
+  try{const w=+localStorage.getItem("wgo-railw");if(w)set(w)}catch(e){}
+  const save=()=>{try{localStorage.setItem("wgo-railw",parseInt(getComputedStyle(app).getPropertyValue("--railw"))||410)}catch(e){}};
+  sp.addEventListener("pointerdown",e=>{e.preventDefault();sp.setPointerCapture(e.pointerId);sp.classList.add("drag");
+    const mv=ev=>set(innerWidth-ev.clientX-3),up=()=>{sp.classList.remove("drag");sp.removeEventListener("pointermove",mv);sp.removeEventListener("pointerup",up);save()};
+    sp.addEventListener("pointermove",mv);sp.addEventListener("pointerup",up)});
+  sp.addEventListener("dblclick",()=>{app.style.removeProperty("--railw");try{localStorage.removeItem("wgo-railw")}catch(e){}});
+  sp.addEventListener("keydown",e=>{const cur=document.getElementById("aside").getBoundingClientRect().width;
+    if(e.key==="ArrowLeft"){set(cur+30);save();e.preventDefault()}else if(e.key==="ArrowRight"){set(cur-30);save();e.preventDefault()}});
+})();
 let rt;new ResizeObserver(()=>{clearTimeout(rt);rt=setTimeout(()=>{layout();drawBase();svg.call(zoom.transform,TR)},120)}).observe(stage);
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{renderAll();renderThemeBtn()});
 /* ---------- day / night ---------- */
