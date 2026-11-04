@@ -1,5 +1,5 @@
 // WGO app shell: open instantly and work offline with the last news; news itself always comes fresh from the network.
-const CACHE = 'wgo-v4';
+const CACHE = 'wgo-v5';
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/countries-50m.json', '/places.json'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => {
