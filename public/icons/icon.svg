@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#131b26"/>
+  <g fill="none" stroke="#4a5768" stroke-width="6">
+    <circle cx="256" cy="230" r="70"/><circle cx="256" cy="230" r="125" stroke-dasharray="14 12"/><circle cx="256" cy="230" r="180" stroke-opacity=".6"/>
+  </g>
+  <circle cx="256" cy="230" r="26" fill="#d9a441"/>
+  <circle cx="356" cy="150" r="16" fill="#e5534b"/><circle cx="170" cy="300" r="14" fill="#3fbf86"/><circle cx="330" cy="330" r="12" fill="#6b8cff"/>
+  <text x="256" y="470" text-anchor="middle" font-family="Arial Black,Arial,Helvetica,sans-serif" font-weight="900" font-size="96" fill="#f3efe6" letter-spacing="-2">WG<tspan fill="#d9a441">O</tspan></text>
+</svg>

@@ -19,7 +19,7 @@ const PLACES = JSON.stringify(JSON.parse(readFileSync(join(ROOT, 'data', 'places
     alt: kind === 'country' ? [] : [...aliases, ...aliasesAr].filter((a) => a !== name.replace(/, Kuwait$/, '') && a !== ar),
   })));
 
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.webmanifest': 'application/manifest+json' };
 
 function send(res, code, body, type = 'application/json; charset=utf-8', extra = {}) {
   res.writeHead(code, { 'content-type': type, 'x-content-type-options': 'nosniff', ...extra });
