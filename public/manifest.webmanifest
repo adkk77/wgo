@@ -1,7 +1,7 @@
 {
-  "name": "WGO · ماذا يحدث حولك",
+  "name": "WGO · ما الذي يحدث من حولك؟",
   "short_name": "WGO",
-  "description": "ماذا يحدث حولك · What’s going on around you — live news on a map around you.",
+  "description": "ما الذي يحدث من حولك؟ · What’s going on around you — live news on a map around you.",
   "lang": "ar",
   "dir": "rtl",
   "start_url": "/",

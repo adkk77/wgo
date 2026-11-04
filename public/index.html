@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>WGO · ماذا يحدث حولك</title>
-<meta name="description" content="ماذا يحدث حولك · What’s going on around you">
+<title>WGO · ما الذي يحدث من حولك؟</title>
+<meta name="description" content="ما الذي يحدث من حولك؟ · What’s going on around you">
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#131b26">
 <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="WGO">
 <meta property="og:type" content="website">
-<meta property="og:title" content="WGO · ماذا يحدث حولك">
+<meta property="og:title" content="WGO · ما الذي يحدث من حولك؟">
 <meta property="og:description" content="أخبار مباشرة على خريطة حولك · Live news on a map around you">
 <meta property="og:image" content="https://wgo.onrender.com/icons/og.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -326,7 +326,7 @@ function rebase(){const R0=6371.0088,r0=Math.PI/180,φ1=HOME.lat*r0;
     s.bearing=Math.round((Math.atan2(Math.sin(dλ)*Math.cos(φ2),Math.cos(φ1)*Math.sin(φ2)-Math.sin(φ1)*Math.cos(φ2)*Math.cos(dλ))/r0+360)%360)}}
 const POLL_MS=120000;
 const T={
-  ar:{tag:"ماذا يحدث حولك",legend:h=>`الحلقات تبيّن المسافة من ${h}. الشمال إلى الأعلى، وكل خبر في موقعه الحقيقي بالمسافة والاتجاه.`,homeQ:"اختر موقعك أو أقرب مكان لك",noHome:"غير موجود، اختر أقرب مدينة لك أو دولتك",useGps:"📍 استخدم موقعي الحالي",gpsFail:"تعذّر تحديد موقعك",myPlace:"موقعي",homeTitle:"موقعك (مركز الخريطة)",
+  ar:{tag:"ما الذي يحدث من حولك؟",legend:h=>`الحلقات تبيّن المسافة من ${h}. الشمال إلى الأعلى، وكل خبر في موقعه الحقيقي بالمسافة والاتجاه.`,homeQ:"اختر موقعك أو أقرب مكان لك",noHome:"غير موجود، اختر أقرب مدينة لك أو دولتك",useGps:"📍 استخدم موقعي الحالي",gpsFail:"تعذّر تحديد موقعك",myPlace:"موقعي",homeTitle:"موقعك (مركز الخريطة)",
       gulf:"الخليج",world:"العالم",within:"ضمن",sortBy:"الترتيب",newest:"الأحدث",nearest:"الأقرب",all:"الكل",
       cats:{financial:"اقتصاد",political:"سياسة",war:"حرب",crisis:"أزمات",crime:"جريمة"},
       inKuwait:h=>`داخل ${h}`,km:"كم",dirs:["شمال","شمال شرق","شرق","جنوب شرق","جنوب","جنوب غرب","غرب","شمال غرب"],compass:["ش","ش ق","ق","ج ق","ج","ج غ","غ","ش غ"],
@@ -369,7 +369,7 @@ function applyLang(){
   document.getElementById("zin").setAttribute("aria-label",t().zin);document.getElementById("zout").setAttribute("aria-label",t().zout);
   document.getElementById("map").setAttribute("aria-label",t().mapLabel(homeName()));renderHomeBtn();
   const q=document.getElementById("q");q.placeholder=t().search;q.setAttribute("aria-label",t().search);
-  document.title=lang==="ar"?"WGO · ماذا يحدث حولك":"WGO · What’s going on around you";
+  document.title=lang==="ar"?"WGO · ما الذي يحدث من حولك؟":"WGO · What’s going on around you";
 }
 document.getElementById("lang").onclick=()=>{lang=lang==="ar"?"en":"ar";try{localStorage.setItem("wgo-lang",lang)}catch(e){}
   state.sel=null;state.group=null;qEl.value="";applyFocus();state.stories=[];state.firstLoad=true;applyLang();renderAll();load()};
